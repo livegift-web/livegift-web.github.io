@@ -262,7 +262,7 @@ function render() {
   ({home: vHome, discover: vDiscover, upload: vUpload, inbox: vInbox, me: vMe})[S.tab](m);
   const lay = $('#layer'); lay.innerHTML = '';
   const top = S.overlay[S.overlay.length - 1];
-  if (top) { const d = document.createElement('div'); d.style.cssText = 'position:absolute;inset:0;background:var(--bg);display:flex;flex-direction:column;z-index:10'; lay.append(d); ({profile: vProfile, chat: vChat, settings: vSettings, edit: vEdit, activity: vActivity})[top.k](d, top); }
+  if (top) { const d = document.createElement('div'); d.style.cssText = 'position:absolute;inset:0;background:var(--bg);display:flex;flex-direction:column;z-index:10'; lay.append(d); ({profile: vProfile, chat: vChat, settings: vSettings, edit: vEdit, activity: vActivity, admin: (x, o) => window.vAdmin(x, o)})[top.k](d, top); }
 }
 const push = (k, o = {}) => { S.overlay.push({k, ...o}); render(); };
 const pop = () => { S.overlay.pop(); render(); };
@@ -487,7 +487,7 @@ function vSettings(d) {
      <label class="k">${t('theme')}</label><div class="chips">${[['dark', t('dark')], ['light', t('light')], ['auto', t('auto')]].map(([k, n]) => `<button data-act="theme" data-v="${k}" class="${S.theme === k ? 'on' : ''}">${n}</button>`).join('')}</div>
      <label class="k" style="margin-top:10px">${t('accent')}</label><div class="sw">${Object.keys(ACC).map(k => `<button data-act="accent" data-v="${k}" class="${S.accent === k ? 'on' : ''}" style="background:linear-gradient(135deg,${ACC[k][0]},${ACC[k][1]})"></button>`).join('')}</div>
      <label class="k" style="margin-top:10px">${t('language')}</label><div class="chips">${['fa', 'en', 'de'].map(l => `<button data-act="lang" data-v="${l}" class="${l === lang ? 'on' : ''}">${lb(l)}</button>`).join('')}</div></div>
-   <div class="install">${t('liveios')}</div>
+   ${S.me && S.me.is_admin ? `<button class="btn" data-act="admin">🛡 ${({fa: 'پنل مدیر', en: 'Admin panel', de: 'Admin-Bereich'})[lang]}</button>` : ''}<div class="install">${t('liveios')}</div>
    <div class="glass grp links"><a href="${LEGAL}privacy.html" target="_blank" rel="noopener">${t('privacy')}</a><a href="${LEGAL}terms.html" target="_blank" rel="noopener">${t('terms')}</a><a href="${LEGAL}support.html" target="_blank" rel="noopener">${t('support')}</a></div>
    <button class="btn sec" data-act="logout">${t('logout')}</button>
    <button class="btn danger" data-act="delacc">${t('deleteacc')}</button></div>`;
@@ -591,6 +591,7 @@ async function act(el) {
     case 'edit': push('edit'); break;
     case 'sharecard': shareCard(); break;
     case 'settings': push('settings'); break;
+    case 'admin': push('admin'); break;
     case 'activity': push('activity'); break;
     case 'logout': saveSession(null); S.me = null; renderAuth(); break;
     case 'delacc': {
