@@ -441,7 +441,7 @@ async function vMe(m) {
    <div class="phead">${avatar(me.avatar_url, me.username, 'big')}<h2 style="margin:6px 0 0;font-size:22px">${esc(me.display_name || me.username)}</h2><div class="mut">@${esc(me.username)}</div><div class="lvl" id="lvl"></div><div class="small" style="max-width:300px">${esc(me.bio)}</div></div>
    ${S.installHint && !matchMedia('(display-mode: standalone)').matches && !navigator.standalone ? `<div class="install" style="margin-top:12px">${t('installhint')}<br><button class="link" data-act="hint">${t('dismiss')}</button></div>` : ''}
    <div class="stats glass" id="st"><div><b>…</b><span class="mut small">${t('followers')}</span></div><div><b>…</b><span class="mut small">${t('likes')}</span></div><div><b id="cn">0</b><span class="mut small">${t('coins')} 🪙</span></div></div>
-   <div class="row" style="margin-bottom:6px"><button class="btn sec" data-act="edit">${t('edit')}</button><button class="btn sec" data-act="sharecard" style="width:auto;padding-inline:18px">🔗</button><button class="btn sec" data-act="activity" style="width:auto;padding-inline:18px">🔔</button><button class="btn sec" data-act="settings" style="width:auto;padding-inline:18px">⚙️</button></div>
+   <div class="row" style="margin-bottom:6px"><button class="btn sec" data-act="edit">${t('edit')}</button><button class="btn sec" data-act="sharecard" style="width:auto;padding-inline:18px">🔗</button><button class="btn sec" data-act="games" style="width:auto;padding-inline:18px">🎮</button><button class="btn sec" data-act="activity" style="width:auto;padding-inline:18px">🔔</button><button class="btn sec" data-act="settings" style="width:auto;padding-inline:18px">⚙️</button></div>
    <div class="ptabs"><button data-act="ptab" data-v="posts" class="${S.ptab === 'liked' ? '' : 'on'}">${t('posts')}</button><button data-act="ptab" data-v="liked" class="${S.ptab === 'liked' ? 'on' : ''}">${t('likedtab')}</button></div>
    <div id="mine">${spin}</div></div>`;
   const cn = $('#cn'); if (cn) countUp(cn, Number(me.coins) || 0);
@@ -593,6 +593,7 @@ async function act(el) {
     case 'settings': push('settings'); break;
     case 'admin': push('admin'); break;
     case 'lives': window.Live && Live.list(); break;
+    case 'games': window.Games && Games.open(); break;
     case 'activity': push('activity'); break;
     case 'logout': saveSession(null); S.me = null; renderAuth(); break;
     case 'delacc': {
