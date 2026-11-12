@@ -176,7 +176,23 @@ function countUp(el, to) { const t0 = performance.now(), d = 700; const f = now 
 
 const root = $('#app');
 function toast(m) { const e = $('#toast'); e.textContent = m; e.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => e.hidden = true, 2600); }
-const fail = e => toast(e && e.message ? e.message : t('error'));
+const AGE = {
+ fa:{t:'تأیید سن',d:'برای لایو و هدیه فرستادن، قانون ایمنی سن را می‌خواهد. تاریخ تولد فقط یک بار ذخیره می‌شود و برای دیگران نمایش داده نمی‌شود.',s:'ذخیره',lim:'این امکان برای سن شما مجاز نیست.',ban:'لایو شما موقتاً محدود شده است.',u13:'سن شما برای استفاده کافی نیست.',saved:'ذخیره شد. دوباره امتحان کنید.'},
+ en:{t:'Confirm your age',d:'Live and gifts need an age check for safety. Your birth date is saved once and never shown to others.',s:'Save',lim:'This feature is not available for your age.',ban:'Your live access is temporarily limited.',u13:'You are too young to use this.',saved:'Saved. Please try again.'},
+ de:{t:'Alter bestätigen',d:'Für Live und Geschenke ist aus Sicherheitsgründen eine Altersprüfung nötig. Dein Geburtsdatum wird einmal gespeichert und niemandem angezeigt.',s:'Speichern',lim:'Diese Funktion ist für dein Alter nicht verfügbar.',ban:'Dein Live-Zugang ist vorübergehend eingeschränkt.',u13:'Du bist zu jung für die Nutzung.',saved:'Gespeichert. Bitte erneut versuchen.'}
+};
+function ageGate() {
+  const A_ = AGE[lang] || AGE.en, bg = sheet(A_.t, `<div class="body" style="display:flex;flex-direction:column;gap:12px"><div class="mut small">${A_.d}</div><input id="bd" type="date" dir="ltr" max="${new Date().toISOString().slice(0, 10)}" min="1906-01-01"><button class="btn" id="bs">${A_.s}</button></div>`);
+  $('#bs', bg).onclick = async () => { const v = $('#bd', bg).value; if (!v) return; try { await rpc('set_birth_date', {p_date: v}); closeSheet(); toast(A_.saved); } catch (e) { toast(/UNDER13/.test(e.message) ? A_.u13 : e.message); } };
+}
+const fail = e => {
+  const m = e && e.message ? e.message : '', A_ = AGE[lang] || AGE.en;
+  if (/AGE_REQUIRED/.test(m)) return ageGate();
+  if (/AGE_LIMIT/.test(m)) return toast(A_.lim);
+  if (/LIVE_BANNED/.test(m)) return toast(A_.ban);
+  if (/UNDER13/.test(m)) return toast(A_.u13);
+  toast(m || t('error'));
+};
 function applyLang() { document.documentElement.lang = lang; document.documentElement.dir = L[lang].dir; }
 const initial = n => esc((n || '?').trim().charAt(0).toUpperCase());
 const avatar = (url, name, cls = '') => url ? `<img class="av ${cls}" src="${esc(url)}" alt="" loading="lazy">` : `<span class="av grad ${cls}">${initial(name)}</span>`;
