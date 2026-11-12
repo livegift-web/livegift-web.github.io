@@ -317,17 +317,17 @@ let _ac; function chime(big) { try { _ac = _ac || new (window.AudioContext || wi
 function giftHero(emoji, name) {
   const h = document.createElement('div'); h.className = 'hero3d';
   h.innerHTML = `<div class="halo"></div><div class="rays"></div><div class="obj">${esc(emoji)}</div><div class="nm">${esc(name)}</div>` + Array.from({length: 22}, (_, i) => `<i class="sp" style="--a:${i * 16.4}deg;--d:${120 + Math.random() * 140}px;animation-delay:${Math.random() * .3}s"></i>`).join('');
-  root.append(h); chime(true); if (navigator.vibrate) navigator.vibrate([30, 40, 60]); setTimeout(() => h.remove(), 3600);
+  ($('#live') || root).append(h); chime(true); if (navigator.vibrate) navigator.vibrate([30, 40, 60]); setTimeout(() => h.remove(), 3600);
 }
 function giftRain(emoji, name, big) {
   chime(false); if (big) giftHero(emoji, name);
   const r = document.createElement('div'); r.className = 'rain';
   for (let i = 0; i < 26; i++) { const e = document.createElement('span'); e.textContent = emoji; e.style.left = Math.random() * 100 + '%'; e.style.fontSize = (22 + Math.random() * 34) + 'px'; e.style.animationDuration = (1.6 + Math.random() * 1.6) + 's'; e.style.animationDelay = Math.random() * .6 + 's'; r.append(e); }
   const b = document.createElement('div'); b.className = 'giftbanner'; b.textContent = emoji + ' ' + name; r.append(b);
-  root.append(r); setTimeout(() => r.remove(), 4000);
+  ($('#live') || root).append(r); setTimeout(() => r.remove(), 4000);
 }
 async function vHome(m) {
-  m.innerHTML = `<div class="top"><button data-act="ftab" data-v="foryou" class="${S.ftab === 'following' ? '' : 'on'}">${t('foryou')}</button><button data-act="ftab" data-v="following" class="${S.ftab === 'following' ? 'on' : ''}">${t('followingtab')}</button></div><div class="feed" id="feed"><div class="post"><div class="sk" style="width:100%;height:100%;border-radius:0"></div></div></div>`;
+  m.innerHTML = `<div class="top"><button data-act="ftab" data-v="foryou" class="${S.ftab === 'following' ? '' : 'on'}">${t('foryou')}</button><button data-act="ftab" data-v="following" class="${S.ftab === 'following' ? 'on' : ''}">${t('followingtab')}</button><button data-act="lives">🔴 ${({fa: 'لایو', en: 'Live', de: 'Live'})[lang]}</button></div><div class="feed" id="feed"><div class="post"><div class="sk" style="width:100%;height:100%;border-radius:0"></div></div></div>`;
   try {
     if (!S.all || S.reload) { S.all = (await A.feed()).filter(p => !S.blocked.has(p.author_id)); S.reload = false; }
     S.posts = S.ftab === 'following' ? S.all.filter(p => S.following.has(p.author_id) || p.author_id === session.userID) : S.all;
@@ -592,6 +592,7 @@ async function act(el) {
     case 'sharecard': shareCard(); break;
     case 'settings': push('settings'); break;
     case 'admin': push('admin'); break;
+    case 'lives': window.Live && Live.list(); break;
     case 'activity': push('activity'); break;
     case 'logout': saveSession(null); S.me = null; renderAuth(); break;
     case 'delacc': {
