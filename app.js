@@ -57,6 +57,16 @@ const L = {
   liveios:'Live-Streams und Spiele gibt es derzeit nur in der iOS-App.',mute:'Ton',admin:'Admin',like_a:'gefiel dein Beitrag',comment_a:'hat kommentiert',follow_a:'folgt dir jetzt',gift_a:'hat ein Geschenk gesendet',
   banned:'Ihr Konto ist eingeschränkt.',signedas:'Angemeldet als'}
 };
+
+const XL = {
+ fa:{online:'آنلاین‌ها',spot:'خالق ویژه',tags:'هشتگ‌های داغ',all:'همه',photos:'عکس',videos:'ویدیو',lv:['تازه‌وارد','در حال رشد','ستاره','آیکون','افسانه'],level:'سطح',appearance:'ظاهر',theme:'پوسته',auto:'خودکار',dark:'تیره',light:'روشن',accent:'رنگ اصلی',skip:'رد کردن',
+  onb1t:'ویدیو بساز و شگفت‌زده کن',onb1d:'فیلتر و افکت زنده، متن و استیکر، همه در همین برنامه.',onb2t:'هدیه بده، حمایت کن',onb2d:'دکمهٔ هدیه را نگه دار تا سریع و پشت‌سرهم بفرستی.',onb3t:'گفتگو و دوستان',onb3d:'پیام بده، دنبال کن و آدم‌های تازه کشف کن.',start:'شروع',nxt:'بعدی',combo:'کمبو',noresult:'نتیجه‌ای پیدا نشد.',account:'حساب',about:'دربارهٔ برنامه',score:'امتیاز',tapgift:'ارسال سریع'},
+ en:{online:'Online now',spot:'Featured creator',tags:'Trending tags',all:'All',photos:'Photos',videos:'Videos',lv:['Newcomer','Rising','Star','Icon','Legend'],level:'Level',appearance:'Appearance',theme:'Theme',auto:'Auto',dark:'Dark',light:'Light',accent:'Accent color',skip:'Skip',
+  onb1t:'Make videos that wow',onb1d:'Live filters and effects, text and stickers, all in one app.',onb2t:'Send gifts, show support',onb2d:'Hold the gift button to send quickly, again and again.',onb3t:'Chat and friends',onb3d:'Message, follow and discover new people.',start:'Get started',nxt:'Next',combo:'Combo',noresult:'No results found.',account:'Account',about:'About',score:'Score',tapgift:'Quick send'},
+ de:{online:'Jetzt online',spot:'Creator des Tages',tags:'Trend-Hashtags',all:'Alle',photos:'Fotos',videos:'Videos',lv:['Neuling','Aufsteiger','Star','Ikone','Legende'],level:'Level',appearance:'Darstellung',theme:'Design',auto:'Automatisch',dark:'Dunkel',light:'Hell',accent:'Akzentfarbe',skip:'Überspringen',
+  onb1t:'Videos, die begeistern',onb1d:'Live-Filter und Effekte, Text und Sticker, alles in einer App.',onb2t:'Geschenke senden, unterstützen',onb2d:'Geschenk-Button gedrückt halten für schnelles, wiederholtes Senden.',onb3t:'Chat und Freunde',onb3d:'Nachrichten senden, folgen und neue Leute entdecken.',start:'Los geht’s',nxt:'Weiter',combo:'Combo',noresult:'Keine Ergebnisse gefunden.',account:'Konto',about:'Über die App',score:'Punkte',tapgift:'Schnell senden'}
+};
+for (const k in XL) Object.assign(L[k], XL[k]);
 const store = {get(k){try{return localStorage.getItem(k)}catch{return null}},set(k,v){try{localStorage.setItem(k,v)}catch{}},del(k){try{localStorage.removeItem(k)}catch{}}};
 let lang = store.get('lg.lang') || (navigator.language||'').slice(0,2);
 if (!L[lang]) lang = 'fa';
@@ -147,7 +157,23 @@ const A = {
 };
 
 /* ---------- state ---------- */
-const S = {tab: 'home', overlay: [], me: null, posts: [], liked: new Set(), following: new Set(), blocked: new Set(), gifts: [], unread: 0, muted: true, installHint: store.get('lg.hint') !== '1', authMode: 'in', ftab: 'foryou', ptab: 'posts', all: null};
+const S = {tab: 'home', overlay: [], me: null, posts: [], liked: new Set(), following: new Set(), blocked: new Set(), gifts: [], unread: 0, muted: true, installHint: store.get('lg.hint') !== '1', authMode: 'in', ftab: 'foryou', ptab: 'posts', all: null, theme: store.get('lg.theme') || 'dark', accent: store.get('lg.acc') || 'aurora', onb: store.get('lg.onb') !== '1', dtag: null, dcat: 'all'};
+const ACC = {aurora: ['#ff3d81', '#8a5cff'], ocean: ['#18e0ff', '#7a5cff'], sunset: ['#ffa03d', '#ff3d81'], lime: ['#35d07f', '#18c4ff']};
+function applyTheme() {
+  const r = document.documentElement, dark = S.theme === 'dark' || (S.theme === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches);
+  r.dataset.theme = dark ? 'dark' : 'light';
+  const [a, b] = ACC[S.accent] || ACC.aurora; r.style.setProperty('--acc', a); r.style.setProperty('--acc2', b); r.style.setProperty('--g', `linear-gradient(135deg,${a} 0%,${b} 100%)`);
+  const m = document.querySelector('meta[name=theme-color]'); if (m) m.content = dark ? '#08060e' : '#f6f3fb';
+}
+applyTheme();
+const AURORA = '<div class="aurora"><i></i><i></i><i></i></div>';
+const hueOf = id => { let h = 0; for (const c of String(id)) h = (h * 31 + c.charCodeAt(0)) % 360; return h; };
+const thumbOf = p => p.kind === 'photo' ? p.media_url : p.media_url.replace(/\.(mp4|webm|mov)$/i, '-thumb.jpg');
+window.lgVid = (img, u) => { const v = document.createElement('video'); v.src = u + '#t=0.5'; v.muted = true; v.playsInline = true; v.preload = 'auto'; v.onloadeddata = () => { try { v.currentTime = .5; } catch {} }; img.replaceWith(v); };
+const LEVELS = [['🌱', 0], ['🚀', 10], ['⭐', 50], ['👑', 200], ['🔥', 1000]];
+const lvlOf = sc => { let i = 0; LEVELS.forEach(([, n], k) => { if (sc >= n) i = k; }); return i; };
+function countUp(el, to) { const t0 = performance.now(), d = 700; const f = now => { const k = Math.min(1, (now - t0) / d); el.textContent = fmt(Math.round(to * (1 - Math.pow(1 - k, 3)))); if (k < 1) requestAnimationFrame(f); }; requestAnimationFrame(f); }
+
 const root = $('#app');
 function toast(m) { const e = $('#toast'); e.textContent = m; e.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => e.hidden = true, 2600); }
 const fail = e => toast(e && e.message ? e.message : t('error'));
@@ -173,14 +199,23 @@ const IC = {
 };
 
 /* ---------- render: auth ---------- */
+function renderOnb(n = 0) {
+  applyLang();
+  const sl = [['🎬', t('onb1t'), t('onb1d')], ['🎁', t('onb2t'), t('onb2d')], ['💬', t('onb3t'), t('onb3d')]], c = sl[n];
+  root.innerHTML = `${AURORA}<div class="view onb"><div class="lang">${['fa', 'en', 'de'].map(l => `<button data-act="lang" data-v="${l}" class="${l === lang ? 'on' : ''}">${l === 'fa' ? 'فارسی' : l === 'en' ? 'English' : 'Deutsch'}</button>`).join('')}</div>
+   <div class="onb-c"><div class="onb-ic" key="${n}">${c[0]}</div><h1>${c[1]}</h1><p class="mut">${c[2]}</p></div>
+   <div class="dots">${sl.map((_, k) => `<i class="${k === n ? 'on' : ''}"></i>`).join('')}</div>
+   <div class="row" style="width:100%"><button class="btn sec" data-act="onbskip" style="flex:1">${t('skip')}</button><button class="btn" data-act="onbnext" data-v="${n}" style="flex:2">${n === 2 ? t('start') : t('nxt')}</button></div></div>`;
+}
 function renderAuth(msg = {}) {
   applyLang();
+  if (S.onb) return renderOnb(S.onbStep || 0);
   const up = S.authMode === 'up', fg = S.authMode === 'forgot';
-  root.innerHTML = `<div class="auth-bg"></div><div class="view"><div class="auth">
+  root.innerHTML = `${AURORA}<div class="view"><div class="auth">
    <div style="text-align:center"><div class="logo">Livegift</div><div class="mut">${t('tagline')}</div></div>
    <div class="lang">${['fa', 'en', 'de'].map(l => `<button data-act="lang" data-v="${l}" class="${l === lang ? 'on' : ''}">${l === 'fa' ? 'فارسی' : l === 'en' ? 'English' : 'Deutsch'}</button>`).join('')}</div>
    ${msg.err ? `<div class="err">${esc(msg.err)}</div>` : ''}${msg.ok ? `<div class="okmsg">${esc(msg.ok)}</div>` : ''}
-   <form id="af" style="display:flex;flex-direction:column;gap:12px">
+   <form id="af" class="glass" style="display:flex;flex-direction:column;gap:12px;padding:16px">
     <input id="em" type="email" dir="ltr" autocomplete="email" placeholder="${t('email')}" required>
     ${fg ? '' : `<input id="pw" type="password" dir="ltr" autocomplete="${up ? 'new-password' : 'current-password'}" placeholder="${t('password')}" required>`}
     <button class="btn" id="go">${fg ? t('forgot') : up ? t('signup') : t('signin')}</button>
@@ -216,7 +251,7 @@ async function boot() {
 function shell() {
   applyLang();
   const tabs = [['home', IC.home, t('home')], ['discover', IC.search, t('discover')], ['upload', IC.plus, ''], ['inbox', IC.chat, t('inbox')], ['me', IC.user, t('me')]];
-  root.innerHTML = `<div id="main" style="flex:1;min-height:0;display:flex;flex-direction:column"></div><nav class="tabs">${tabs.map(([k, i, n]) => `<button data-act="tab" data-v="${k}" class="${k === 'upload' ? 'plus ' : ''}${S.tab === k && !S.overlay.length ? 'on' : ''}">${i}${n ? `<span>${n}</span>` : ''}${k === 'inbox' && S.unread ? `<span class="dot">${S.unread}</span>` : ''}</button>`).join('')}</nav><div id="layer"></div>`;
+  root.innerHTML = `${AURORA}<div id="main"></div><nav class="tabs">${tabs.map(([k, i, n]) => `<button data-act="tab" data-v="${k}" class="${k === 'upload' ? 'plus ' : ''}${S.tab === k && !S.overlay.length ? 'on' : ''}">${i}${n ? `<span>${n}</span>` : ''}${k === 'inbox' && S.unread ? `<span class="dot">${S.unread}</span>` : ''}</button>`).join('')}</nav><div id="layer"></div>`;
   render();
 }
 async function refreshUnread() { try { const th = await A.threads(); S.unread = th.reduce((a, x) => a + (x.unread || 0), 0); const b = $('.tabs [data-v=inbox]'); if (b) { let d = $('.dot', b); if (S.unread) { if (!d) { d = document.createElement('span'); d.className = 'dot'; b.append(d); } d.textContent = S.unread; } else if (d) d.remove(); } } catch {} }
@@ -239,7 +274,7 @@ function postHTML(p) {
   const media = p.kind === 'photo'
     ? `<img class="m" src="${esc(p.media_url)}" alt="" loading="lazy">`
     : `<video src="${esc(p.media_url)}" playsinline loop ${S.muted ? 'muted' : ''} preload="metadata"></video>`;
-  return `<section class="post" data-id="${p.id}" data-k="${p.kind}">${p.kind === 'photo' ? `<div class="bgblur" style="background-image:url('${esc(p.media_url)}')"></div>` : ''}${media}<div class="ov"></div><div class="pauseic">⏸</div>
+  return `<section class="post" data-id="${p.id}" data-k="${p.kind}" style="--h:${hueOf(p.id)}">${p.kind === 'photo' ? `<div class="bgblur" style="background-image:url('${esc(p.media_url)}')"></div>` : ''}${media}<div class="ov"></div><div class="pauseic">⏸</div>
    <div class="info"><div class="who" data-act="user" data-v="${p.author_id}">${avatar(a.avatar_url, a.username, 'sm')}<span>@${esc(a.username)}</span></div>${p.caption ? `<div class="cap" data-act="cap">${esc(p.caption)}</div>` : ''}</div>
    <div class="side">
     <div class="avwrap" data-act="user" data-v="${p.author_id}">${avatar(a.avatar_url, a.username, 'ring')}${!own && !fol ? `<span class="follow-plus" data-act="follow2" data-v="${p.author_id}">+</span>` : ''}</div>
@@ -297,17 +332,31 @@ async function vHome(m) {
 
 /* ---------- discover ---------- */
 async function vDiscover(m) {
-  m.innerHTML = `<div class="view"><h1>${t('discover')}</h1><input id="q" placeholder="${t('search')}" style="margin:8px 0 16px"><div id="res">${spin}</div></div>`;
+  m.innerHTML = `<div class="view"><h1>${t('discover')}</h1><input id="q" placeholder="${t('search')}" style="margin:10px 0 14px"><div id="res">${spin}</div></div>`;
   const res = $('#res');
-  const rows = r => `<div class="list">${r.map(x => `<div class="it" data-act="user" data-v="${x.id}">${avatar(x.avatar_url, x.username, 'sm')}<div class="t"><b>@${esc(x.username)}</b><div class="mut small">${esc(x.display_name || '')}</div></div></div>`).join('') || '<div class="empty">—</div>'}</div>`;
+  const rows = r => `<div class="list">${r.map(x => `<div class="it" data-act="user" data-v="${x.id}">${avatar(x.avatar_url, x.username, 'sm')}<div class="t"><b>@${esc(x.username)}</b><div class="mut small">${esc(x.display_name || '')}</div></div></div>`).join('') || `<div class="empty">${t('noresult')}</div>`}</div>`;
   let list = [];
   try {
     list = (await A.creators()).filter(c => !S.blocked.has(c.id));
-    const posts = (S.all || (S.all = (await A.feed()).filter(p => !S.blocked.has(p.author_id)))).slice().sort((a, b) => b.like_count - a.like_count).slice(0, 18);
-    res.innerHTML = `<h2>${t('popular')}</h2><div class="stories">${list.slice(0, 15).map(c => `<div class="story" data-act="user" data-v="${c.id}">${avatar(c.avatar_url, c.username, 'ring')}<div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(c.username)}</div></div>`).join('')}</div><h2>${t('trending')}</h2>${postGrid(posts)}`;
-    S.viewPosts = posts;
+    if (!S.all) S.all = (await A.feed()).filter(p => !S.blocked.has(p.author_id));
+    const draw = () => {
+      let ps = S.all.slice();
+      if (S.dcat === 'photo') ps = ps.filter(p => p.kind === 'photo'); else if (S.dcat === 'video') ps = ps.filter(p => p.kind !== 'photo'); else if (S.dcat === 'following') ps = ps.filter(p => S.following.has(p.author_id));
+      if (S.dtag) ps = ps.filter(p => (p.caption || '').toLowerCase().includes(S.dtag));
+      ps.sort((a, b) => (b.like_count + b.comment_count * 2) - (a.like_count + a.comment_count * 2));
+      const tags = {}; S.all.forEach(p => (p.caption || '').toLowerCase().match(/#[\p{L}\p{N}_]+/gu)?.forEach(x => tags[x] = (tags[x] || 0) + 1));
+      const top = Object.entries(tags).sort((a, b) => b[1] - a[1]).slice(0, 8);
+      const sp = list.filter(c => c.id !== session.userID)[0];
+      S.viewPosts = ps;
+      res.innerHTML = `${sp ? `<div class="spot glass" data-act="user" data-v="${sp.id}">${avatar(sp.avatar_url, sp.username, 'ring big2')}<div class="t"><div class="mut small">${t('spot')}</div><b style="font-size:18px">@${esc(sp.username)}</b><div class="mut small">${fmt(sp.followers)} ${t('followers')}</div></div><button class="btn sm" data-act="follow2" data-v="${sp.id}">${S.following.has(sp.id) ? '✓' : t('follow')}</button></div>` : ''}
+       <div class="stories">${list.slice(0, 15).map(c => `<div class="story" data-act="user" data-v="${c.id}">${avatar(c.avatar_url, c.username, 'ring')}<div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(c.username)}</div></div>`).join('')}</div>
+       <div class="chips" style="margin-bottom:10px">${[['all', t('all')], ['video', t('videos')], ['photo', t('photos')], ['following', t('following')]].map(([k, n]) => `<button data-act="dcat" data-v="${k}" class="${S.dcat === k ? 'on' : ''}">${n}</button>`).join('')}</div>
+       ${top.length ? `<div class="stories tagrow">${top.map(([k, n]) => `<button class="tag ${S.dtag === k ? 'on' : ''}" data-act="dtag" data-v="${esc(k)}">${esc(k)}<small>${n}</small></button>`).join('')}</div>` : ''}
+       <h2>${t('trending')}</h2>${ps.length ? postGrid(ps, true) : `<div class="empty">${t('noresult')}</div>`}`;
+    };
+    S.drawDisc = draw; draw();
   } catch (e) { res.innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
-  let tm; $('#q').oninput = e => { clearTimeout(tm); const v = e.target.value.trim(); tm = setTimeout(async () => { if (!v) return vDiscover(m); try { res.innerHTML = rows(await A.search(v)); } catch (x) { fail(x); } }, 300); };
+  let tm; $('#q').oninput = e => { clearTimeout(tm); const v = e.target.value.trim(); tm = setTimeout(async () => { if (!v) return S.drawDisc && S.drawDisc(); try { res.innerHTML = rows(await A.search(v)); } catch (x) { fail(x); } }, 300); };
 }
 
 /* ---------- upload ---------- */
@@ -338,36 +387,43 @@ function shrink(file, max) {
 
 /* ---------- inbox & chat ---------- */
 async function vInbox(m) {
-  m.innerHTML = `<div class="view"><h1>${t('inbox')}</h1><div id="th" class="list">${spin}</div></div>`;
+  m.innerHTML = `<div class="view"><h1>${t('inbox')}</h1><div id="onl"></div><div id="th" class="list">${spin}</div></div>`;
+  rpc('online_users', {p_limit: 40}).then(o => { const b = $('#onl'); if (b && o && o.length) b.innerHTML = `<div class="mut small" style="margin:6px 0">${t('online')}</div><div class="stories">${o.filter(u => u.id !== session.userID).map(u => `<div class="story" data-act="chat" data-v="${u.id}" data-n="${esc(u.username)}"><span style="position:relative;display:block">${avatar(null, u.username, 'ring')}<i class="onl"></i></span><div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(u.username)}</div></div>`).join('')}</div>`; }).catch(() => {});
   try {
     const th = await A.threads(), box = $('#th'); if (!box) return;
-    box.innerHTML = th.length ? th.map(x => `<div class="it" data-act="chat" data-v="${x.other_id}" data-n="${esc(x.username)}">${avatar(null, x.username)}<div class="t"><b>@${esc(x.username)}</b><div class="mut small">${esc(x.last_body)}</div></div>${x.unread ? `<span class="dot" style="position:static">${x.unread}</span>` : ''}</div>`).join('') : `<div class="empty">${t('nomsg')}</div>`;
+    box.innerHTML = th.length ? th.map(x => `<div class="it" data-act="chat" data-v="${x.other_id}" data-n="${esc(x.username)}">${avatar(null, x.username)}<div class="t"><b>@${esc(x.username)}</b><div class="mut small">${esc(x.last_body)}</div></div><div style="text-align:end"><div class="mut small">${ago(x.last_at)}</div>${x.unread ? `<span class="dot" style="position:static;display:inline-block;margin-top:2px">${x.unread}</span>` : ''}</div></div>`).join('') : `<div class="empty">${t('nomsg')}</div>`;
     S.unread = th.reduce((a, x) => a + (x.unread || 0), 0);
   } catch (e) { $('#th').innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
 }
 async function vChat(d, o) {
-  d.innerHTML = `<div class="bar"><button class="back" data-act="back">${L[lang].dir === 'rtl' ? '→' : '←'}</button><b>@${esc(o.name || '')}</b></div><div class="chat"><div class="msgs" id="msgs">${spin}</div><div class="row" style="padding:10px 16px;padding-bottom:max(10px,env(safe-area-inset-bottom))"><input id="mi" placeholder="${t('typemsg')}" maxlength="1000"><button class="send grad" id="ms">${t('send')}</button></div></div>`;
+  d.innerHTML = `<div class="bar"><button class="back" data-act="back">${L[lang].dir === 'rtl' ? '→' : '←'}</button>${avatar(null, o.name, 'sm')}<b>@${esc(o.name || '')}</b></div><div class="chat"><div class="msgs" id="msgs">${spin}</div><div class="quick" id="qe">${['❤️', '😂', '🔥', '👍', '😍', '🎉'].map(e => `<button data-e="${e}">${e}</button>`).join('')}</div><div class="row" style="padding:8px 16px;padding-bottom:max(10px,env(safe-area-inset-bottom))"><input id="mi" placeholder="${t('typemsg')}" maxlength="1000"><button class="send grad" id="ms">${t('send')}</button></div></div>`;
   let last = 0; const box = $('#msgs'); let first = true;
   const draw = ms => { if (first) { box.innerHTML = ''; first = false; } ms.forEach(x => { if (x.deleted) return; last = Math.max(last, x.id); const b = document.createElement('div'); b.className = 'bubble' + (x.sender_id === session.userID ? ' me' : ''); b.textContent = x.body || (x.media_url ? '📎' : ''); box.append(b); }); box.scrollTop = box.scrollHeight; };
   const poll = async () => { if (!document.body.contains(box)) { clearInterval(iv); return; } try { const ms = await A.dmList(o.id, last); if (first || ms.length) draw(ms); if (ms.length) A.dmRead(o.id); } catch {} };
   const iv = setInterval(poll, 4000); poll();
-  const sendIt = async () => { const i = $('#mi'), v = i.value.trim(); if (!v) return; i.value = ''; try { await A.dmSend(o.id, v); poll(); } catch (e) { fail(e); i.value = v; } };
-  $('#ms').onclick = sendIt; $('#mi').onkeydown = e => { if (e.key === 'Enter') sendIt(); };
+  const send = async v => { v = (v || '').trim(); if (!v) return; try { await A.dmSend(o.id, v); poll(); } catch (e) { fail(e); } };
+  $('#ms').onclick = () => { const i = $('#mi'), v = i.value; i.value = ''; send(v); }; $('#mi').onkeydown = e => { if (e.key === 'Enter') { const i = $('#mi'), v = i.value; i.value = ''; send(v); } };
+  $$('#qe button').forEach(b => b.onclick = () => send(b.dataset.e));
 }
 
 /* ---------- profile (me / others) ---------- */
-function postGrid(ps) { return ps.length ? `<div class="grid">${ps.map(p => `<div class="g" data-act="open" data-v="${p.id}">${p.kind === 'photo' ? `<img src="${esc(p.media_url)}" loading="lazy" alt="">` : `<video src="${esc(p.media_url)}#t=0.1" preload="metadata" muted playsinline></video>`}${p.kind !== 'photo' ? '<i class="vi">▶</i>' : ''}<span>❤️ ${fmt(p.like_count)}</span></div>`).join('')}</div>` : `<div class="empty">${t('nofeed')}</div>`; }
+function postGrid(ps, bento) {
+  if (!ps.length) return `<div class="empty">${t('nofeed')}</div>`;
+  return `<div class="${bento ? 'bento' : 'grid'}">${ps.map(p => `<div class="g" data-act="open" data-v="${p.id}">${p.kind === 'photo' ? `<img src="${esc(p.media_url)}" loading="lazy" alt="">` : `<img src="${esc(thumbOf(p))}" loading="lazy" alt="" onerror="lgVid(this,'${esc(p.media_url)}')">`}${p.kind !== 'photo' ? '<i class="vi">▶</i>' : ''}<span>❤️ ${fmt(p.like_count)}</span></div>`).join('')}</div>`;
+}
 async function vMe(m) {
   const me = S.me || {};
-  m.innerHTML = `<div class="view">
-   <div class="cover"></div>
-   <div class="phead">${avatar(me.avatar_url, me.username, 'big')}<h2 style="margin:6px 0 0">${esc(me.display_name || me.username)}</h2><div class="mut">@${esc(me.username)}</div><div class="small" style="max-width:300px">${esc(me.bio)}</div></div>
+  m.innerHTML = `<div class="view" id="mev">
+   <div class="cover" id="cov"></div>
+   <div class="phead">${avatar(me.avatar_url, me.username, 'big')}<h2 style="margin:6px 0 0;font-size:22px">${esc(me.display_name || me.username)}</h2><div class="mut">@${esc(me.username)}</div><div class="lvl" id="lvl"></div><div class="small" style="max-width:300px">${esc(me.bio)}</div></div>
    ${S.installHint && !matchMedia('(display-mode: standalone)').matches && !navigator.standalone ? `<div class="install" style="margin-top:12px">${t('installhint')}<br><button class="link" data-act="hint">${t('dismiss')}</button></div>` : ''}
-   <div class="stats" id="st"><div><b>…</b><span class="mut small">${t('followers')}</span></div><div><b>…</b><span class="mut small">${t('likes')}</span></div><div><b>${fmt(me.coins)}</b><span class="mut small">${t('coins')} 🪙</span></div></div>
+   <div class="stats glass" id="st"><div><b>…</b><span class="mut small">${t('followers')}</span></div><div><b>…</b><span class="mut small">${t('likes')}</span></div><div><b id="cn">0</b><span class="mut small">${t('coins')} 🪙</span></div></div>
    <div class="row" style="margin-bottom:6px"><button class="btn sec" data-act="edit">${t('edit')}</button><button class="btn sec" data-act="activity" style="width:auto;padding-inline:18px">🔔</button><button class="btn sec" data-act="settings" style="width:auto;padding-inline:18px">⚙️</button></div>
    <div class="ptabs"><button data-act="ptab" data-v="posts" class="${S.ptab === 'liked' ? '' : 'on'}">${t('posts')}</button><button data-act="ptab" data-v="liked" class="${S.ptab === 'liked' ? 'on' : ''}">${t('likedtab')}</button></div>
    <div id="mine">${spin}</div></div>`;
-  A.stats().then(s => { const st = $('#st'); if (st && s) st.innerHTML = `<div><b>${fmt(s.followers)}</b><span class="mut small">${t('followers')}</span></div><div><b>${fmt(s.likes)}</b><span class="mut small">${t('likes')}</span></div><div><b>${fmt(me.coins)}</b><span class="mut small">${t('coins')} 🪙</span></div>`; }).catch(() => {});
+  const cn = $('#cn'); if (cn) countUp(cn, Number(me.coins) || 0);
+  const mev = $('#mev'), cov = $('#cov'); if (mev) mev.onscroll = () => { cov.style.transform = `translateY(${mev.scrollTop * .4}px) scale(${1 + Math.min(.3, mev.scrollTop / 900)})`; };
+  A.stats().then(st => { const el = $('#st'); if (!el || !st) return; el.innerHTML = `<div><b data-c="${st.followers}">0</b><span class="mut small">${t('followers')}</span></div><div><b data-c="${st.likes}">0</b><span class="mut small">${t('likes')}</span></div><div><b data-c="${Number(me.coins) || 0}">0</b><span class="mut small">${t('coins')} 🪙</span></div>`; $$('[data-c]', el).forEach(b => countUp(b, +b.dataset.c)); const sc = st.followers * 5 + st.likes, k = lvlOf(sc), nx = LEVELS[k + 1], pct = nx ? Math.round((sc - LEVELS[k][1]) / (nx[1] - LEVELS[k][1]) * 100) : 100; const l = $('#lvl'); if (l) l.innerHTML = `<span>${LEVELS[k][0]} ${t('level')} ${k + 1} · ${t('lv')[k]}</span><i><b style="width:${pct}%"></b></i>`; }).catch(() => {});
   try {
     let ps;
     if (S.ptab === 'liked') { const ids = [...S.liked]; ps = ids.length ? await sel('posts', {select: '*,author:profiles!author_id(username,avatar_url)', id: 'in.(' + ids.slice(0, 60).join(',') + ')', is_removed: 'eq.false', order: 'created_at.desc'}) : []; }
@@ -401,13 +457,15 @@ function vEdit(d) {
   $('#sv').onclick = async () => { const row = {username: $('#un').value.trim(), display_name: $('#dn').value.trim(), bio: $('#bi').value.trim()}; if (avUrl) row.avatar_url = avUrl; try { await A.updateProfile(row); S.me = await A.profile(session.userID); toast(t('saved')); pop(); } catch (e) { fail(e); } };
 }
 function vSettings(d) {
-  d.innerHTML = `<div class="bar"><button class="back" data-act="back">${L[lang].dir === 'rtl' ? '→' : '←'}</button><b>${t('settings')}</b></div><div class="view" style="display:flex;flex-direction:column;gap:14px">
-   <div class="mut small">${t('signedas')} ${esc(session.email)}</div>
-   <div><label class="k">${t('language')}</label><div class="lang" style="justify-content:flex-start">${['fa', 'en', 'de'].map(l => `<button data-act="lang" data-v="${l}" class="${l === lang ? 'on' : ''}">${l === 'fa' ? 'فارسی' : l === 'en' ? 'English' : 'Deutsch'}</button>`).join('')}</div></div>
+  const lb = l => l === 'fa' ? 'فارسی' : l === 'en' ? 'English' : 'Deutsch';
+  d.innerHTML = `<div class="bar"><button class="back" data-act="back">${L[lang].dir === 'rtl' ? '→' : '←'}</button><b>${t('settings')}</b></div><div class="view" style="display:flex;flex-direction:column;gap:16px">
+   <div class="glass grp"><div class="mut small">${t('account')}</div><div style="font-weight:700">${esc(session.email)}</div></div>
+   <div class="glass grp"><div class="mut small">${t('appearance')}</div>
+     <label class="k">${t('theme')}</label><div class="chips">${[['dark', t('dark')], ['light', t('light')], ['auto', t('auto')]].map(([k, n]) => `<button data-act="theme" data-v="${k}" class="${S.theme === k ? 'on' : ''}">${n}</button>`).join('')}</div>
+     <label class="k" style="margin-top:10px">${t('accent')}</label><div class="sw">${Object.keys(ACC).map(k => `<button data-act="accent" data-v="${k}" class="${S.accent === k ? 'on' : ''}" style="background:linear-gradient(135deg,${ACC[k][0]},${ACC[k][1]})"></button>`).join('')}</div>
+     <label class="k" style="margin-top:10px">${t('language')}</label><div class="chips">${['fa', 'en', 'de'].map(l => `<button data-act="lang" data-v="${l}" class="${l === lang ? 'on' : ''}">${lb(l)}</button>`).join('')}</div></div>
    <div class="install">${t('liveios')}</div>
-   <a class="btn sec" href="${LEGAL}privacy.html" target="_blank" rel="noopener">${t('privacy')}</a>
-   <a class="btn sec" href="${LEGAL}terms.html" target="_blank" rel="noopener">${t('terms')}</a>
-   <a class="btn sec" href="${LEGAL}support.html" target="_blank" rel="noopener">${t('support')}</a>
+   <div class="glass grp links"><a href="${LEGAL}privacy.html" target="_blank" rel="noopener">${t('privacy')}</a><a href="${LEGAL}terms.html" target="_blank" rel="noopener">${t('terms')}</a><a href="${LEGAL}support.html" target="_blank" rel="noopener">${t('support')}</a></div>
    <button class="btn sec" data-act="logout">${t('logout')}</button>
    <button class="btn danger" data-act="delacc">${t('deleteacc')}</button></div>`;
 }
@@ -470,6 +528,12 @@ async function act(el) {
     case 'hint': S.installHint = false; store.set('lg.hint', '1'); render(); break;
     case 'mute': S.muted = !S.muted; $$('video').forEach(x => x.muted = S.muted); $$('.mic').forEach(i => i.innerHTML = S.muted ? IC.mute : IC.sound); break;
     case 'ftab': S.ftab = v; render(); break;
+    case 'dcat': S.dcat = v; S.drawDisc && S.drawDisc(); break;
+    case 'dtag': S.dtag = S.dtag === v ? null : v; S.drawDisc && S.drawDisc(); break;
+    case 'theme': S.theme = v; store.set('lg.theme', v); applyTheme(); render(); break;
+    case 'accent': S.accent = v; store.set('lg.acc', v); applyTheme(); render(); break;
+    case 'onbskip': S.onb = false; store.set('lg.onb', '1'); renderAuth(); break;
+    case 'onbnext': { const n = +v; if (n >= 2) { S.onb = false; store.set('lg.onb', '1'); renderAuth(); } else { S.onbStep = n + 1; renderOnb(S.onbStep); } break; }
     case 'ptab': S.ptab = v; render(); break;
     case 'cap': el.classList && el.classList.toggle('open'); break;
     case 'follow2': { S.following.add(v); $$(`.follow-plus[data-v="${v}"]`).forEach(x => x.remove()); try { await A.follow(v, true); } catch (e) { fail(e); } break; }
@@ -511,7 +575,31 @@ async function act(el) {
     }
   }
 }
-document.addEventListener('click', e => { const el = e.target.closest('[data-act]'); if (el) { e.preventDefault(); act(el); } });
+let lpT = null, lpDone = false, combo = {n: 0, k: '', t: 0};
+async function quickGift(g, btn) {
+  const u = btn.dataset.u, pid = btn.dataset.v;
+  if (S.me.coins < g.price) return toast(t('nocoins'));
+  try {
+    S.me.coins = Number(await A.sendGift(u, g.id, 1, pid));
+    const now = Date.now(); combo = {n: combo.k === g.id + pid && now - combo.t < 2500 ? combo.n + 1 : 1, k: g.id + pid, t: now};
+    giftRain(g.emoji, lang === 'fa' ? g.name_fa : g.name_en);
+    const sec = btn.closest('.post') || root; $$('.combo', sec).forEach(x => x.remove());
+    if (combo.n > 1) { const c = document.createElement('div'); c.className = 'combo'; c.textContent = '×' + combo.n; sec.append(c); setTimeout(() => c.remove(), 1500); }
+  } catch (e) { fail(e); }
+}
+document.addEventListener('pointerdown', e => {
+  const b = e.target.closest('.giftb'); if (!b) { if (!e.target.closest('.qg')) $$('.qg').forEach(x => x.remove()); return; }
+  lpDone = false; clearTimeout(lpT);
+  lpT = setTimeout(() => {
+    lpDone = true; $$('.qg').forEach(x => x.remove());
+    const top = [...S.gifts].sort((a, c) => a.price - c.price).slice(0, 3), q = document.createElement('div'); q.className = 'qg';
+    q.innerHTML = top.map(g => `<button data-g="${g.id}">${esc(g.emoji)}<small>${g.price}</small></button>`).join('');
+    q.onclick = ev => { const x = ev.target.closest('button'); if (x) quickGift(S.gifts.find(g => g.id === x.dataset.g), b); };
+    (b.closest('.post') || root).append(q); if (navigator.vibrate) navigator.vibrate(15);
+  }, 420);
+});
+['pointerup', 'pointercancel', 'pointermove'].forEach(ev => document.addEventListener(ev, () => clearTimeout(lpT)));
+document.addEventListener('click', e => { if (lpDone) { lpDone = false; e.preventDefault(); e.stopPropagation(); return; } const el = e.target.closest('[data-act]'); if (el) { e.preventDefault(); act(el); } }, true);
 
 /* ---------- start ---------- */
 if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));

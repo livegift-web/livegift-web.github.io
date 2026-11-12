@@ -438,6 +438,7 @@ function publishStage(s) {
       const id = crypto.randomUUID(), photo = s.blobKind === 'photo', ext = photo ? 'jpg' : (/webm/.test(s.mime) ? 'webm' : 'mp4');
       const ct = photo ? 'image/jpeg' : (ext === 'webm' ? 'video/webm' : 'video/mp4');
       const url = await upload(s.blob, `${session.userID}/${id}.${ext}`, ct);
+      if (!photo) { try { const v = $('.prevth video', p), c = document.createElement('canvas'), k = Math.min(1, 540 / (v.videoWidth || 720)); c.width = Math.round((v.videoWidth || 720) * k); c.height = Math.round((v.videoHeight || 1280) * k); if (v.currentTime < .1) { try { v.currentTime = .3; await new Promise(r => { v.onseeked = r; setTimeout(r, 600); }); } catch {} } c.getContext('2d').drawImage(v, 0, 0, c.width, c.height); const tb = await new Promise(r => c.toBlob(r, 'image/jpeg', .8)); if (tb) await upload(tb, `${session.userID}/${id}-thumb.jpg`, 'image/jpeg'); } catch (e) { console.warn('thumb', e); } }
       await ins('posts', {id, author_id: session.userID, kind: photo ? 'photo' : 'video', media_url: url, caption: $('#pcap', p).value.trim(), effect: 'none', visibility: vis, allow_download: 'everyone', allow_share: 'everyone', allow_comments: 'everyone'});
       clearInterval(iv); bar.style.width = '100%'; toast(T('done')); closeStudio(); S.all = null; S.tab = 'home'; S.overlay = []; shell();
     } catch (e) { clearInterval(iv); fail(e); go.disabled = false; go.textContent = T('publish'); $('#pp', p).hidden = true; }
