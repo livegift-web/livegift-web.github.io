@@ -184,3 +184,16 @@ label.k{font-size:13px;color:var(--mut);display:block;margin-bottom:4px}
 .auth .glass{border-radius:22px}
 :focus-visible{outline:2px solid var(--acc2);outline-offset:2px}
 @media (prefers-reduced-motion:reduce){.aurora i,.onb-ic,.side .giftb .ic{animation:none}*{transition-duration:.01ms!important}}
+
+/* 3D hero gift */
+.hero3d{position:absolute;inset:0;z-index:45;display:flex;align-items:center;justify-content:center;flex-direction:column;pointer-events:none;perspective:700px;background:radial-gradient(circle,rgba(0,0,0,.15),rgba(0,0,0,.65));animation:herofade 3.6s forwards}
+@keyframes herofade{0%{opacity:0}8%{opacity:1}85%{opacity:1}100%{opacity:0}}
+.hero3d .obj{font-size:170px;line-height:1;transform-style:preserve-3d;animation:spin3d 3.4s cubic-bezier(.2,.8,.3,1) forwards;filter:drop-shadow(0 20px 40px rgba(255,61,129,.7))}
+@keyframes spin3d{0%{transform:scale(.1) rotateY(-540deg) rotateX(30deg)}35%{transform:scale(1.25) rotateY(0) rotateX(0)}50%{transform:scale(1) rotateY(20deg) rotateX(-8deg)}100%{transform:scale(1.1) rotateY(-12deg) rotateX(6deg)}}
+.hero3d .halo{position:absolute;width:340px;height:340px;border-radius:50%;background:radial-gradient(circle,var(--acc),transparent 65%);filter:blur(20px);opacity:.75;animation:pulse 1.2s ease-in-out infinite alternate}
+@keyframes pulse{to{transform:scale(1.25);opacity:.4}}
+.hero3d .rays{position:absolute;width:520px;height:520px;background:repeating-conic-gradient(from 0deg,rgba(255,255,255,.18) 0 6deg,transparent 6deg 18deg);border-radius:50%;-webkit-mask:radial-gradient(circle,#000 0,transparent 68%);mask:radial-gradient(circle,#000 0,transparent 68%);animation:rot 6s linear infinite}
+@keyframes rot{to{transform:rotate(360deg)}}
+.hero3d .nm{position:absolute;bottom:26%;font-size:26px;font-weight:900;background:var(--g);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 2px 10px rgba(0,0,0,.6));animation:pop2 .5s .5s both}
+.hero3d .sp{position:absolute;width:8px;height:8px;border-radius:50%;background:#fff;box-shadow:0 0 12px var(--acc);animation:spark 1.4s ease-out both}
+@keyframes spark{from{transform:rotate(var(--a)) translateY(0);opacity:1}to{transform:rotate(var(--a)) translateY(calc(-1 * var(--d)));opacity:0}}

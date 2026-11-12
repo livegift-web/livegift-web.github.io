@@ -2,15 +2,15 @@
 /* Livegift Studio — camera, live filters (WebGL), effects, stickers, recording, publish. Web only. */
 (() => {
 const TX = {
- fa:{studio:'استودیو',video:'ویدیو',photo:'عکس',filters:'فیلتر',effects:'افکت',adjust:'تنظیم',beauty:'زیبایی',stickers:'استیکر',text:'متن',gallery:'گالری',next:'بعدی',retake:'دوباره',
+ fa:{magic:'جادو',magicd:'جادو اعمال شد ✨',studio:'استودیو',video:'ویدیو',photo:'عکس',filters:'فیلتر',effects:'افکت',adjust:'تنظیم',beauty:'زیبایی',stickers:'استیکر',text:'متن',gallery:'گالری',next:'بعدی',retake:'دوباره',
   caption:'توضیح و هشتگ…',publish:'انتشار',publishing:'در حال ارسال…',processing:'در حال ساخت ویدیو…',orig:'ارسال بدون فیلتر',camfail:'دسترسی به دوربین ممکن نشد. از گالری انتخاب کنید.',
   norec:'ضبط ویدیو در این مرورگر پشتیبانی نمی‌شود.',bright:'روشنایی',contrast:'کنتراست',sat:'رنگ',warm:'گرما',vig:'وینیت',smooth:'صافی پوست',typehere:'متن را بنویسید',add:'افزودن',
   done:'منتشر شد ✅',speed:'سرعت',reset:'بازنشانی',vis:'چه کسی ببیند',public:'همه',followers:'دنبال‌کنندگان',private:'فقط من',sound:'صدا',max:'حداکثر ۶۰ ثانیه',webm:'این مرورگر فقط webm می‌سازد؛ برای اپ iOS از Safari استفاده کنید.'},
- en:{studio:'Studio',video:'Video',photo:'Photo',filters:'Filters',effects:'Effects',adjust:'Adjust',beauty:'Beauty',stickers:'Stickers',text:'Text',gallery:'Gallery',next:'Next',retake:'Retake',
+ en:{magic:'Magic',magicd:'Magic applied ✨',studio:'Studio',video:'Video',photo:'Photo',filters:'Filters',effects:'Effects',adjust:'Adjust',beauty:'Beauty',stickers:'Stickers',text:'Text',gallery:'Gallery',next:'Next',retake:'Retake',
   caption:'Caption and hashtags…',publish:'Publish',publishing:'Uploading…',processing:'Creating video…',orig:'Post without filters',camfail:'Camera not available. Choose from gallery.',
   norec:'Video recording is not supported in this browser.',bright:'Brightness',contrast:'Contrast',sat:'Color',warm:'Warmth',vig:'Vignette',smooth:'Skin smoothing',typehere:'Type your text',add:'Add',
   done:'Published ✅',speed:'Speed',reset:'Reset',vis:'Who can see it',public:'Everyone',followers:'Followers',private:'Only me',sound:'Sound',max:'Max 60 seconds',webm:'This browser only makes webm; use Safari for the iOS app.'},
- de:{studio:'Studio',video:'Video',photo:'Foto',filters:'Filter',effects:'Effekte',adjust:'Anpassen',beauty:'Beauty',stickers:'Sticker',text:'Text',gallery:'Galerie',next:'Weiter',retake:'Neu',
+ de:{magic:'Magie',magicd:'Magie angewendet ✨',studio:'Studio',video:'Video',photo:'Foto',filters:'Filter',effects:'Effekte',adjust:'Anpassen',beauty:'Beauty',stickers:'Sticker',text:'Text',gallery:'Galerie',next:'Weiter',retake:'Neu',
   caption:'Beschreibung und Hashtags…',publish:'Veröffentlichen',publishing:'Wird hochgeladen…',processing:'Video wird erstellt…',orig:'Ohne Filter posten',camfail:'Kamera nicht verfügbar. Wählen Sie aus der Galerie.',
   norec:'Videoaufnahme wird in diesem Browser nicht unterstützt.',bright:'Helligkeit',contrast:'Kontrast',sat:'Farbe',warm:'Wärme',vig:'Vignette',smooth:'Hautglättung',typehere:'Text eingeben',add:'Hinzufügen',
   done:'Veröffentlicht ✅',speed:'Tempo',reset:'Zurücksetzen',vis:'Wer darf es sehen',public:'Alle',followers:'Follower',private:'Nur ich',sound:'Ton',max:'Maximal 60 Sekunden',webm:'Dieser Browser erzeugt nur webm; für die iOS-App Safari verwenden.'}
@@ -42,6 +42,7 @@ const FILTERS = [
 ];
 const EFFECTS = [
  {id:'glow', n:N('درخشش','Glow','Leuchten'), e:'✨', u:{glow:1}},
+ {id:'bars', n:N('حالت سینمایی','Cinema Mode','Kino-Modus'), e:'🎞️', u:{vig:.45,grain:.35,fade:.08,con:1.12,split:.3}},
  {id:'glitch', n:N('گلیچ','Glitch','Glitch'), e:'📺', u:{glitch:1}},
  {id:'chroma', n:N('تفکیک رنگ','RGB Split','RGB-Split'), e:'🌈', u:{chroma:1}},
  {id:'vhs', n:N('VHS','VHS','VHS'), e:'📼', u:{vhs:1,scan:.5,grain:.5}},
@@ -217,7 +218,7 @@ function stopSrc(s) { if (s.stream) { s.stream.getTracks().forEach(t => t.stop()
 
 function buildRail(s) {
   const r = $('#rail', s.el);
-  r.innerHTML = [['filters', '🎨', T('filters')], ['effects', '✨', T('effects')], ['adjust', '🎚️', T('adjust')], ['beauty', '💄', T('beauty')], ['stickers', '😊', T('stickers')], ['text', 'Aa', T('text')]].map(([k, i, n]) => `<button data-p="${k}"><span class="round">${i}</span>${n}</button>`).join('');
+  r.innerHTML = [['magic', '🪄', T('magic')], ['filters', '🎨', T('filters')], ['effects', '✨', T('effects')], ['adjust', '🎚️', T('adjust')], ['beauty', '💄', T('beauty')], ['stickers', '😊', T('stickers')], ['text', 'Aa', T('text')]].map(([k, i, n]) => `<button data-p="${k}"><span class="round">${i}</span>${n}</button>`).join('');
 }
 function buildFilters(s) {
   $('#fch', s.el).innerHTML = FILTERS.map(f => { const [a, b] = f.sw.split(','); return `<button class="fchip ${f.id === s.filter ? 'on' : ''}" data-f="${f.id}"><i style="background:linear-gradient(135deg,${a},${b})"></i>${esc(nm(f.n))}</button>`; }).join('');
@@ -228,6 +229,7 @@ function panel(s, title, inner) {
 }
 const closePanel = s => { if (s.panel) { s.panel.remove(); s.panel = null; } };
 function openPanel(s, k) {
+  if (k === 'magic') { closePanel(s); const L2 = ['dream', 'cinema', 'rose', 'neon', 'gold'], best = L2[(L2.indexOf(s.filter) + 1) % L2.length]; s.filter = best; s.fx.add('glow'); s.adj.beauty = Math.max(s.adj.beauty, .35); s.adj.vig = Math.max(s.adj.vig, .2); s.adj.sat = Math.max(s.adj.sat, 1.1); buildFilters(s); toast(T('magicd')); return; }
   if (k === 'filters') { closePanel(s); const f = $('#fch', s.el); f.scrollIntoView?.({inline: 'center'}); return; }
   if (k === 'effects') {
     const p = panel(s, T('effects'), `<div class="egrid">${EFFECTS.map(e => `<button data-e="${e.id}" class="${s.fx.has(e.id) ? 'on' : ''}"><b>${e.e}</b>${esc(nm(e.n))}</button>`).join('')}</div>`);
@@ -325,6 +327,7 @@ function loop(s) {
 }
 const fmtT = x => Math.floor(x / 60) + ':' + String(Math.floor(x % 60)).padStart(2, '0');
 function drawItems(s, ctx) {
+  if (s.fx.has('bars')) { const bh = Math.round(H * .115); ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, bh); ctx.fillRect(0, H - bh, W, bh); }
   for (const it of s.items) {
     ctx.save(); ctx.translate(it.x * W, it.y * H); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     if (it.type === 'emoji') { ctx.font = `${Math.round(110 * it.s)}px serif`; ctx.fillText(it.v, 0, 0); }

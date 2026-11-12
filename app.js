@@ -313,7 +313,14 @@ function heartBurst(sec, ev) {
   const r = sec.getBoundingClientRect(), h = document.createElement('div'); h.className = 'bigheart'; h.textContent = '❤️';
   h.style.left = (ev.clientX - r.left - 55) + 'px'; h.style.top = (ev.clientY - r.top - 70) + 'px'; sec.append(h); setTimeout(() => h.remove(), 850);
 }
-function giftRain(emoji, name) {
+let _ac; function chime(big) { try { _ac = _ac || new (window.AudioContext || window.webkitAudioContext)(); const n = _ac.currentTime; (big ? [523, 659, 784, 1047, 1319] : [784, 1047]).forEach((f, i) => { const o = _ac.createOscillator(), g = _ac.createGain(); o.type = 'sine'; o.frequency.value = f; g.gain.setValueAtTime(0, n + i * .09); g.gain.linearRampToValueAtTime(.18, n + i * .09 + .02); g.gain.exponentialRampToValueAtTime(.001, n + i * .09 + .7); o.connect(g).connect(_ac.destination); o.start(n + i * .09); o.stop(n + i * .09 + .8); }); } catch {} }
+function giftHero(emoji, name) {
+  const h = document.createElement('div'); h.className = 'hero3d';
+  h.innerHTML = `<div class="halo"></div><div class="rays"></div><div class="obj">${esc(emoji)}</div><div class="nm">${esc(name)}</div>` + Array.from({length: 22}, (_, i) => `<i class="sp" style="--a:${i * 16.4}deg;--d:${120 + Math.random() * 140}px;animation-delay:${Math.random() * .3}s"></i>`).join('');
+  root.append(h); chime(true); if (navigator.vibrate) navigator.vibrate([30, 40, 60]); setTimeout(() => h.remove(), 3600);
+}
+function giftRain(emoji, name, big) {
+  chime(false); if (big) giftHero(emoji, name);
   const r = document.createElement('div'); r.className = 'rain';
   for (let i = 0; i < 26; i++) { const e = document.createElement('span'); e.textContent = emoji; e.style.left = Math.random() * 100 + '%'; e.style.fontSize = (22 + Math.random() * 34) + 'px'; e.style.animationDuration = (1.6 + Math.random() * 1.6) + 's'; e.style.animationDelay = Math.random() * .6 + 's'; r.append(e); }
   const b = document.createElement('div'); b.className = 'giftbanner'; b.textContent = emoji + ' ' + name; r.append(b);
@@ -411,6 +418,22 @@ function postGrid(ps, bento) {
   if (!ps.length) return `<div class="empty">${t('nofeed')}</div>`;
   return `<div class="${bento ? 'bento' : 'grid'}">${ps.map(p => `<div class="g" data-act="open" data-v="${p.id}">${p.kind === 'photo' ? `<img src="${esc(p.media_url)}" loading="lazy" alt="">` : `<img src="${esc(thumbOf(p))}" loading="lazy" alt="" onerror="lgVid(this,'${esc(p.media_url)}')">`}${p.kind !== 'photo' ? '<i class="vi">▶</i>' : ''}<span>❤️ ${fmt(p.like_count)}</span></div>`).join('')}</div>`;
 }
+async function shareCard() {
+  const me = S.me || {}, c = document.createElement('canvas'); c.width = 1080; c.height = 1350; const x = c.getContext('2d');
+  const [c1, c2] = ACC[S.accent] || ACC.aurora, g = x.createLinearGradient(0, 0, 1080, 1350); g.addColorStop(0, '#120a22'); g.addColorStop(1, '#2a1250'); x.fillStyle = g; x.fillRect(0, 0, 1080, 1350);
+  [[200, 250, c1], [900, 1100, c2], [880, 300, '#18d4ff']].forEach(([px, py, col]) => { const r = x.createRadialGradient(px, py, 0, px, py, 520); r.addColorStop(0, col + '99'); r.addColorStop(1, 'transparent'); x.fillStyle = r; x.fillRect(0, 0, 1080, 1350); });
+  x.fillStyle = 'rgba(255,255,255,.1)'; x.strokeStyle = 'rgba(255,255,255,.25)'; x.lineWidth = 3; x.beginPath(); x.roundRect(90, 220, 900, 900, 60); x.fill(); x.stroke();
+  const ag = x.createLinearGradient(380, 300, 700, 620); ag.addColorStop(0, c1); ag.addColorStop(1, c2); x.fillStyle = ag; x.beginPath(); x.arc(540, 470, 150, 0, 7); x.fill();
+  x.fillStyle = '#fff'; x.textAlign = 'center'; x.font = '800 150px sans-serif'; x.textBaseline = 'middle'; x.fillText((me.username || '?')[0].toUpperCase(), 540, 480);
+  x.font = '800 72px Vazirmatn,sans-serif'; x.fillText(me.display_name || me.username || '', 540, 720); x.fillStyle = 'rgba(255,255,255,.65)'; x.font = '500 44px sans-serif'; x.fillText('@' + (me.username || ''), 540, 790);
+  let st = {followers: 0, likes: 0}; try { st = (await A.stats()) || st; } catch {} const k = lvlOf(st.followers * 5 + st.likes);
+  x.fillStyle = '#fff'; x.font = '700 50px Vazirmatn,sans-serif'; x.fillText(`${LEVELS[k][0]} ${t('level')} ${k + 1} · ${t('lv')[k]}`, 540, 900);
+  x.font = '800 64px sans-serif'; x.fillText(fmt(st.followers) + '   ·   ' + fmt(st.likes) + ' ❤️', 540, 1010);
+  x.font = '900 70px sans-serif'; x.fillStyle = c1; x.fillText('Livegift', 540, 1240);
+  const blob = await new Promise(r => c.toBlob(r, 'image/png')), f = new File([blob], 'livegift-card.png', {type: 'image/png'});
+  try { if (navigator.canShare && navigator.canShare({files: [f]})) { await navigator.share({files: [f], text: 'Livegift @' + me.username}); return; } } catch (e) { if (e.name === 'AbortError') return; }
+  const u = URL.createObjectURL(blob), l = document.createElement('a'); l.href = u; l.download = 'livegift-card.png'; l.click(); setTimeout(() => URL.revokeObjectURL(u), 4000);
+}
 async function vMe(m) {
   const me = S.me || {};
   m.innerHTML = `<div class="view" id="mev">
@@ -418,7 +441,7 @@ async function vMe(m) {
    <div class="phead">${avatar(me.avatar_url, me.username, 'big')}<h2 style="margin:6px 0 0;font-size:22px">${esc(me.display_name || me.username)}</h2><div class="mut">@${esc(me.username)}</div><div class="lvl" id="lvl"></div><div class="small" style="max-width:300px">${esc(me.bio)}</div></div>
    ${S.installHint && !matchMedia('(display-mode: standalone)').matches && !navigator.standalone ? `<div class="install" style="margin-top:12px">${t('installhint')}<br><button class="link" data-act="hint">${t('dismiss')}</button></div>` : ''}
    <div class="stats glass" id="st"><div><b>…</b><span class="mut small">${t('followers')}</span></div><div><b>…</b><span class="mut small">${t('likes')}</span></div><div><b id="cn">0</b><span class="mut small">${t('coins')} 🪙</span></div></div>
-   <div class="row" style="margin-bottom:6px"><button class="btn sec" data-act="edit">${t('edit')}</button><button class="btn sec" data-act="activity" style="width:auto;padding-inline:18px">🔔</button><button class="btn sec" data-act="settings" style="width:auto;padding-inline:18px">⚙️</button></div>
+   <div class="row" style="margin-bottom:6px"><button class="btn sec" data-act="edit">${t('edit')}</button><button class="btn sec" data-act="sharecard" style="width:auto;padding-inline:18px">🔗</button><button class="btn sec" data-act="activity" style="width:auto;padding-inline:18px">🔔</button><button class="btn sec" data-act="settings" style="width:auto;padding-inline:18px">⚙️</button></div>
    <div class="ptabs"><button data-act="ptab" data-v="posts" class="${S.ptab === 'liked' ? '' : 'on'}">${t('posts')}</button><button data-act="ptab" data-v="liked" class="${S.ptab === 'liked' ? 'on' : ''}">${t('likedtab')}</button></div>
    <div id="mine">${spin}</div></div>`;
   const cn = $('#cn'); if (cn) countUp(cn, Number(me.coins) || 0);
@@ -506,7 +529,7 @@ function giftSheet(user, postId) {
   $('#gs').onclick = async () => {
     if (!pick) return;
     if (S.me.coins < pick.price * qty) return toast(t('nocoins'));
-    try { S.me.coins = Number(await A.sendGift(user, pick.id, qty, postId)); toast(t('giftsent')); closeSheet(); giftRain(pick.emoji, lang === 'fa' ? pick.name_fa : pick.name_en); } catch (e) { fail(e); }
+    try { S.me.coins = Number(await A.sendGift(user, pick.id, qty, postId)); toast(t('giftsent')); closeSheet(); giftRain(pick.emoji, lang === 'fa' ? pick.name_fa : pick.name_en, pick.price * qty >= 50); } catch (e) { fail(e); }
   };
 }
 function openPostViewer(id, list) {
@@ -566,6 +589,7 @@ async function act(el) {
     case 'block': { const on = !S.blocked.has(v); try { await A.block(v, on); on ? S.blocked.add(v) : S.blocked.delete(v); on && S.following.delete(v); render(); } catch (e) { fail(e); } break; }
     case 'reportu': try { await A.report('user', v, 'user_report'); toast(t('reported')); } catch (e) { fail(e); } break;
     case 'edit': push('edit'); break;
+    case 'sharecard': shareCard(); break;
     case 'settings': push('settings'); break;
     case 'activity': push('activity'); break;
     case 'logout': saveSession(null); S.me = null; renderAuth(); break;
@@ -582,7 +606,7 @@ async function quickGift(g, btn) {
   try {
     S.me.coins = Number(await A.sendGift(u, g.id, 1, pid));
     const now = Date.now(); combo = {n: combo.k === g.id + pid && now - combo.t < 2500 ? combo.n + 1 : 1, k: g.id + pid, t: now};
-    giftRain(g.emoji, lang === 'fa' ? g.name_fa : g.name_en);
+    giftRain(g.emoji, lang === 'fa' ? g.name_fa : g.name_en, g.price >= 50);
     const sec = btn.closest('.post') || root; $$('.combo', sec).forEach(x => x.remove());
     if (combo.n > 1) { const c = document.createElement('div'); c.className = 'combo'; c.textContent = '×' + combo.n; sec.append(c); setTimeout(() => c.remove(), 1500); }
   } catch (e) { fail(e); }
