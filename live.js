@@ -28,8 +28,8 @@ const css = `
 #live .redot{background:#ff2d55;border-radius:6px;padding:2px 8px;font-size:12px;font-weight:800;animation:glowp 1.6s infinite}
 #live .guests{position:absolute;top:calc(max(12px,env(safe-area-inset-top)) + 52px);inset-inline-end:10px;display:flex;flex-direction:column;gap:8px;z-index:4;max-height:55%;overflow-y:auto;scrollbar-width:none}
 #live .guests .pane{flex:none;width:92px;height:128px;border-radius:14px;border:1.5px solid rgba(255,255,255,.35)}
-#live .chatl{position:absolute;inset-inline-start:12px;bottom:calc(76px + env(safe-area-inset-bottom));width:68%;max-height:34%;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;gap:5px;z-index:4;pointer-events:none;-webkit-mask:linear-gradient(transparent,#000 35%);mask:linear-gradient(transparent,#000 35%)}
-#live .chatl div{background:rgba(0,0,0,.38);backdrop-filter:blur(6px);border-radius:14px;padding:4px 11px;font-size:13.5px;width:fit-content;max-width:100%;word-break:break-word;pointer-events:auto}
+#live .chatl{position:absolute;inset-inline-start:12px;bottom:calc(76px + env(safe-area-inset-bottom));width:74%;max-height:36%;overflow-y:auto;display:flex;flex-direction:column;gap:5px;z-index:4;scrollbar-width:none;-webkit-mask:linear-gradient(transparent,#000 25%);mask:linear-gradient(transparent,#000 25%)}#live .chatl::-webkit-scrollbar{display:none}#live .chatl>div:first-child{margin-top:auto}#live.host .chatl{bottom:calc(132px + env(safe-area-inset-bottom))}#live .chatl .sys{background:none;color:#d8c8ff;font-size:12.5px;padding:2px 4px}
+#live .chatl div{background:rgba(0,0,0,.38);backdrop-filter:blur(6px);border-radius:14px;padding:4px 11px;font-size:13.5px;width:fit-content;max-width:100%;word-break:break-word;flex:none}
 #live .chatl b{color:#ffb3d1;margin-inline-end:6px}#live .chatl .g{background:linear-gradient(135deg,rgba(255,61,129,.55),rgba(138,92,255,.55))}
 #live .lv-bar{position:absolute;inset-inline:0;bottom:0;padding:10px 12px;padding-bottom:max(12px,env(safe-area-inset-bottom));display:flex;gap:8px;align-items:center;z-index:5}
 #live .lv-bar input{flex:1;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.2);border-radius:22px;padding:10px 16px;color:#fff}
@@ -52,6 +52,13 @@ const css = `
 .lvcard .redot{position:absolute;top:10px;inset-inline-start:10px;background:#ff2d55;border-radius:6px;padding:2px 8px;font-size:11px;font-weight:800;color:#fff}
 .lvcard .vw{position:absolute;top:10px;inset-inline-end:10px;font-size:12px;background:rgba(0,0,0,.45);border-radius:10px;padding:2px 8px;color:#fff}
 .lvrow{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}.lvrow b{flex:1}
+
+#live .lv-bar.two{flex-direction:column;align-items:stretch}#live .lv-bar .r1,#live .lv-bar .r2{display:flex;gap:6px;align-items:center}#live .lv-bar .r2{justify-content:space-between}
+#live .req{position:absolute;top:calc(max(12px,env(safe-area-inset-top)) + 54px);inset-inline:12px;z-index:8;background:rgba(20,12,40,.92);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.2);border-radius:18px;padding:10px 12px;display:flex;gap:8px;align-items:center;animation:pop2 .3s cubic-bezier(.3,1.6,.5,1)}#live .req b{flex:1}
+#live .lv-stage.match{top:calc(max(12px,env(safe-area-inset-top)) + 100px);bottom:auto;height:44%;flex-direction:row;gap:2px;border-radius:14px;overflow:hidden}#live .lv-stage.match .pane{min-width:0}
+#live.inmatch .guests{display:none}#live.inmatch{background:radial-gradient(circle at 50% 30%,#2a1250,#05030a)}
+#live .score{top:calc(max(12px,env(safe-area-inset-top)) + 52px);transform:none}
+#live .vs{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:5;font-weight:900;font-size:22px;font-style:italic;background:#000;border:2px solid #fff;border-radius:50%;width:42px;height:42px;display:flex;align-items:center;justify-content:center}
 `;
 function injectCSS() { if (document.getElementById('live-css')) return; const st = document.createElement('style'); st.id = 'live-css'; st.textContent = css; document.head.append(st); }
 
@@ -100,6 +107,7 @@ function wire(room, S_, isOpp) {
   room.on(RoomEvent.TrackUnsubscribed, (tr, pub, p) => setTrack(S_, p, tr, false));
   room.on(RoomEvent.TrackMuted, (pub, p) => { if (pub.kind === 'video') { const pn = S_.panes && S_.panes.get(p.identity); if (pn) pn.classList.add('camoff'); } });
   room.on(RoomEvent.TrackUnmuted, (pub, p) => { if (pub.kind === 'video') { const pn = S_.panes && S_.panes.get(p.identity); if (pn) pn.classList.remove('camoff'); } });
+  if (!isOpp) room.on(RoomEvent.ParticipantConnected, p => { if (p.identity !== S_.hostId && p.name) addChat('', '👋 ' + p.name, false, true); updCount(); });
   room.on(RoomEvent.ParticipantDisconnected, p => { if (S_.panes && S_.panes.has(p.identity) && p.identity !== S_.hostId) { S_.panes.delete(p.identity); arrange(); } if (!isOpp && p.identity === S_.hostId && !S_.isHost) ended(); });
   if (isOpp) return;
   room.on(RoomEvent.DataReceived, (payload, p, kind, topic) => { if (topic && topic !== 'livegift') return; let m; try { m = JSON.parse(new TextDecoder().decode(payload)); } catch { return; } onMsg(m, p); });
@@ -114,18 +122,18 @@ function send(m) { if (!s || !s.room) return; try { s.room.localParticipant.publ
 function arrange() {
   if (!s) return; const st = $('.lv-stage', s.el), gs = $('.guests', s.el); if (!st) return;
   const me = s.panes && s.panes.get(s.hostId), others = [...(s.panes || new Map()).entries()].filter(([id]) => id !== s.hostId && id !== s.oppHost);
-  st.innerHTML = '';
+  st.innerHTML = ''; st.classList.toggle('match', !!(s.match && s.oppPane)); s.el.classList.toggle('inmatch', !!(s.match && s.oppPane));
   if (me) { me.style.flex = '1'; st.append(me); }
-  if (s.match && s.oppPane) { st.append(s.oppPane); }
+  if (s.match && s.oppPane) { s.oppPane.style.flex = '1'; st.append(s.oppPane); }
   gs.innerHTML = ''; others.forEach(([, p]) => { p.style.flex = ''; gs.append(p); });
   if (!me) st.innerHTML = `<div class="pane"><div class="off" style="display:flex"><div class="spin"></div></div></div>`;
   if (s.match) renderScore();
 }
 function heart(x) { const h = document.createElement('span'); h.className = 'hrt'; h.textContent = x || ['❤️', '💖', '💗', '🧡', '💜'][Math.random() * 5 | 0]; h.style.setProperty('--dx', (Math.random() * 60 - 40) + 'px'); h.style.insetInlineStart = Math.random() * 20 + 'px'; const hz = $('.hearts', s.el); if (hz) { hz.append(h); setTimeout(() => h.remove(), 2500); } }
-function addChat(name, text, gift) { const c = $('.chatl', s.el); if (!c) return; const d = document.createElement('div'); if (gift) d.className = 'g'; d.innerHTML = `<b>${esc(name || '')}</b>${esc(text)}`; c.append(d); while (c.children.length > 7) c.firstChild.remove(); }
+function addChat(name, text, gift, sys) { const c = $('.chatl', s.el); if (!c) return; const d = document.createElement('div'); if (gift) d.className = 'g'; if (sys) d.className = 'sys'; d.innerHTML = name ? `<b>${esc(name)}</b>${esc(text)}` : esc(text); c.append(d); while (c.children.length > 120) c.firstChild.remove(); c.scrollTop = c.scrollHeight; }
 function onMsg(m, p) {
   const who = m.u || (p && p.name) || '';
-  if (m.t === 'chat') { addChat(who, m.m); if (s.isHost && p) { const last = $('.chatl div:last-child', s.el); if (last) last.dataset.uid = p.identity; } }
+  if (m.t === 'chat') { addChat((p && p.identity === s.hostId ? '👑 ' : '') + who, m.m); if (s.isHost && p) { const last = $('.chatl div:last-child', s.el); if (last) last.dataset.uid = p.identity; } }
   else if (m.t === 'heart') { for (let i = 0; i < Math.min(3, m.n || 1); i++) heart(); }
   else if (m.t === 'gift') { addChat(who, '🎁 ' + m.m, true); const g = S.gifts && S.gifts.find(x => x.id === m.g); if (g) giftRain(g.emoji, who + ' · ' + (lang === 'fa' ? g.name_fa : g.name_en), g.price * (m.n || 1) >= 50); }
   else if (m.t === 'ctl' && p && (p.identity === s.hostId) && m.g && m.g.toLowerCase() === (s.myId || '').toLowerCase()) { if (m.m === 'mic-off') setMic(false); if (m.m === 'cam-off') setCam(false); toast('🎙'); }
@@ -160,7 +168,7 @@ async function watch(row) {
     S_.timers.push(setInterval(() => { updCount(); pollInfo(); }, 5000), setInterval(pollMatchViewer, 4000)); pollInfo(); pollMatchViewer();
   } catch (e) { if (s === S_) { const cn = $('#conn', d); if (cn) cn.innerHTML = `<div style="font-size:44px">⚠️</div><div>${esc(e.message || l_('livefail'))}</div><button class="btn" data-lv="close" style="width:auto;padding-inline:26px">OK</button>`; } }
 }
-function viewerBar() { return `<input id="cin" placeholder="${l_('say')}" maxlength="200"><button class="rb" data-lv="stage" id="stb">🎤</button><button class="rb" data-lv="gift">🎁</button><button class="rb on" data-lv="like">❤️</button>`; }
+function viewerBar() { return `<input id="cin" placeholder="${l_('say')}" maxlength="200" enterkeyhint="send"><button class="rb on" data-lv="send">➤</button><button class="rb" data-lv="stage" id="stb">🎤</button><button class="rb" data-lv="gift">🎁</button><button class="rb on" data-lv="like">❤️</button>`; }
 
 /* ---------- host ---------- */
 async function host() {
@@ -190,7 +198,8 @@ async function startLive() {
   } catch (e) { fail(e); if (go) go.disabled = false; if (S_.liveId && !S_.started) rpc('end_live', {p_id: S_.liveId}).catch(() => {}); }
 }
 function hostBar() {
-  $('.lv-bar', s.el).innerHTML = `<input id="cin" placeholder="${l_('say')}" maxlength="200"><button class="rb ${s.mic ? '' : 'red'}" data-lv="mic" id="mb">🎙</button><button class="rb ${s.cam ? '' : 'red'}" data-lv="cam" id="cb">📷</button><button class="rb" data-lv="flip">🔄</button><button class="rb" data-lv="stagep" id="sp">🙋</button><button class="rb" data-lv="match" id="mt">⚔️</button><button class="rb red" data-lv="endq">⏹</button>`;
+  s.el.classList.add('host'); $('.lv-bar', s.el).classList.add('two');
+  $('.lv-bar', s.el).innerHTML = `<div class="r1"><input id="cin" placeholder="${l_('say')}" maxlength="200" enterkeyhint="send"><button class="rb on" data-lv="send">➤</button></div><div class="r2"><button class="rb ${s.mic ? '' : 'red'}" data-lv="mic" id="mb">🎙</button><button class="rb ${s.cam ? '' : 'red'}" data-lv="cam" id="cb">📷</button><button class="rb" data-lv="flip">🔄</button><button class="rb" data-lv="stagep" id="sp">🙋</button><button class="rb" data-lv="match" id="mt">⚔️</button><button class="rb red" data-lv="endq">⏹</button></div>`;
 }
 async function setMic(on) { if (!s || !s.room) return; try { await s.room.localParticipant.setMicrophoneEnabled(on); s.mic = on; const b = $('#mb', s.el); if (b) b.classList.toggle('red', !on); const g = $('#gmic', s.el); if (g) g.classList.toggle('red', !on); } catch { toast(l_('noperm')); } }
 async function setCam(on) { if (!s || !s.room) return; try { await s.room.localParticipant.setCameraEnabled(on, on ? {facingMode: s.facing || 'user'} : undefined); s.cam = on; const b = $('#cb', s.el) || $('#gcam', s.el); if (b) b.classList.toggle('red', !on); const pn = s.panes && s.panes.get(s.myId); if (pn) pn.classList.toggle('camoff', !on); } catch { toast(l_('noperm')); } }
@@ -205,21 +214,29 @@ async function frameCheck() { // same server-side safety check as the iOS app
 
 /* ---------- guests on stage ---------- */
 async function goStage() {
-  const S_ = s; S_.onStage = true; S_.wantVideo = S_.wantVideo !== false; toast('🎤 ' + l_('onstage'));
-  try { await S_.room.localParticipant.setMicrophoneEnabled(true); S_.mic = true; } catch {}
-  if (S_.wantVideo) { try { await S_.room.localParticipant.setCameraEnabled(true, {facingMode: 'user'}); S_.cam = true; } catch {} }
-  $('.lv-bar', S_.el).innerHTML = `<input id="cin" placeholder="${l_('say')}" maxlength="200"><button class="rb ${S_.mic ? '' : 'red'}" id="gmic" data-lv="mic">🎙</button><button class="rb ${S_.cam ? '' : 'red'}" id="gcam" data-lv="cam">📷</button><button class="rb" data-lv="gift">🎁</button><button class="rb" data-lv="stageoff">⏏️</button><button class="rb on" data-lv="like">❤️</button>`;
+  const S_ = s; if (S_.onStage) return; S_.onStage = true; S_.wantVideo = S_.wantVideo !== false; toast('🎤 ' + l_('onstage'));
+  let bad = false;
+  try { await S_.room.localParticipant.setMicrophoneEnabled(true); S_.mic = true; } catch { bad = true; }
+  if (S_.wantVideo) { try { await S_.room.localParticipant.setCameraEnabled(true, {facingMode: 'user'}); S_.cam = true; } catch { bad = true; } }
+  if (bad) { const c = document.createElement('div'); c.className = 'center'; c.style.background = 'rgba(0,0,0,.55)'; c.innerHTML = `<div style="font-size:44px">🎤</div><div>${l_('onstage')}</div><button class="btn" style="width:auto;padding-inline:28px">▶ ${l_('start')}</button>`; c.onclick = async e => { if (!e.target.closest('button')) return; try { await S_.room.localParticipant.setMicrophoneEnabled(true); S_.mic = true; if (S_.wantVideo) { await S_.room.localParticipant.setCameraEnabled(true, {facingMode: 'user'}); S_.cam = true; } c.remove(); } catch { toast(l_('noperm')); } }; S_.el.append(c); }
+  $('.lv-bar', S_.el).innerHTML = `<input id="cin" placeholder="${l_('say')}" maxlength="200" enterkeyhint="send"><button class="rb on" data-lv="send">➤</button><button class="rb ${S_.mic ? '' : 'red'}" id="gmic" data-lv="mic">🎙</button><button class="rb ${S_.cam ? '' : 'red'}" id="gcam" data-lv="cam">📷</button><button class="rb" data-lv="gift">🎁</button><button class="rb" data-lv="stageoff">⏏️</button><button class="rb on" data-lv="like">❤️</button>`;
 }
 async function leaveStage(silent) { if (!s) return; try { await s.room.localParticipant.setMicrophoneEnabled(false); await s.room.localParticipant.setCameraEnabled(false); } catch {} s.onStage = false; const pn = s.panes && s.panes.get(s.myId); if (pn) { s.panes.delete(s.myId); } arrange(); $('.lv-bar', s.el).innerHTML = viewerBar(); if (!silent) toast('👋'); }
 function stageAsk() {
   const bg = sheet('🎤 ' + l_('join'), `<div class="body" style="display:flex;flex-direction:column;gap:10px"><button class="btn" data-v="1">📹 ${l_('vid')}</button><button class="btn sec" data-v="0">🎙 ${l_('voice')}</button></div>`);
-  $$('.btn', bg).forEach(b => b.onclick = async () => { try { s.wantVideo = b.dataset.v === '1'; await rpc('stage_request', {p_live: s.liveId, p_video: s.wantVideo}); closeSheet(); const x = $('#stb', s.el); if (x) { x.textContent = '⏳'; } toast(l_('waiting')); } catch (e) { fail(e); } });
+  $$('.btn', bg).forEach(b => b.onclick = async () => { try { s.wantVideo = b.dataset.v === '1'; await rpc('stage_request', {p_live: s.liveId, p_video: s.wantVideo}); closeSheet(); const x = $('#stb', s.el); if (x) { x.textContent = '⏳'; } toast(l_('waiting')); const S_ = s; clearInterval(S_.stT); S_.stT = setInterval(() => { if (s !== S_) return clearInterval(S_.stT); const pm = S_.room && S_.room.localParticipant && S_.room.localParticipant.permissions; if (pm && pm.canPublish && !S_.onStage) { clearInterval(S_.stT); goStage(); } }, 2500); S_.timers.push(S_.stT); } catch (e) { fail(e); } });
 }
 async function hostPoll() {
   if (!s || !s.isHost) return;
-  try { const st = await rpc('stage_list', {p_live: s.liveId}); s.stage = st || []; const n = s.stage.filter(x => x.status === 'pending').length, b = $('#sp', s.el); if (b) { const o = $('i', b); if (o) o.remove(); if (n) b.insertAdjacentHTML('beforeend', `<i>${n}</i>`); } if (s.sheet === 'stage') drawStage(); } catch {}
+  try { const st = await rpc('stage_list', {p_live: s.liveId}); s.stage = st || []; const n = s.stage.filter(x => x.status === 'pending').length, b = $('#sp', s.el); if (b) { const o = $('i', b); if (o) o.remove(); if (n) b.insertAdjacentHTML('beforeend', `<i>${n}</i>`); } if (s.sheet === 'stage') drawStage(); s.seen ||= new Set(); s.stage.filter(x => x.status === 'pending' && !s.seen.has(x.user_id)).slice(0, 1).forEach(x => reqBanner(x)); } catch {}
   try { const inc = await rpc('match_incoming'); s.incoming = inc || []; const b = $('#mt', s.el); if (b) { const o = $('i', b); if (o) o.remove(); if (s.incoming.length) b.insertAdjacentHTML('beforeend', `<i>${s.incoming.length}</i>`); } if (s.sheet === 'match') drawMatch(); } catch {}
   if (s.matchId) pollMatchHost();
+}
+function reqBanner(r) {
+  s.seen.add(r.user_id); const b = document.createElement('div'); b.className = 'req';
+  b.innerHTML = `<span>${r.video ? '📹' : '🎙'}</span><b>@${esc(r.username)}</b><button class="btn sm" data-a="accept">${l_('accept')}</button><button class="btn sm sec" data-a="decline">${l_('decline')}</button>`; s.el.append(b);
+  const gone = setTimeout(() => b.remove(), 12000);
+  $$('[data-a]', b).forEach(x => x.onclick = async e => { e.stopPropagation(); clearTimeout(gone); const a = x.dataset.a; try { await rpc('stage_respond', {p_live: s.liveId, p_user: r.user_id, p_action: a}); if (a === 'accept') await ticket(s.liveId, {action: 'stage_on', user_id: r.user_id}); b.remove(); hostPoll(); } catch (er) { fail(er); } });
 }
 function stageSheet() { s.sheet = 'stage'; const bg = sheet('🙋 ' + l_('requests'), '<div class="body" id="stb2"></div>'); const o = bg.onclick; bg.onclick = e => { o(e); if (!$('#sheet')) s.sheet = null; }; drawStage(); }
 function drawStage() {
@@ -230,11 +247,12 @@ function drawStage() {
 
 /* ---------- gifts / likes / chat ---------- */
 function giftSheet2() {
-  let pick = null, qty = 1;
-  const bg = sheet('🎁 ' + l_('gift'), `<div class="body"><div class="mut small" style="margin-bottom:10px">${t('balance')}: <b id="bal">${fmt(S.me.coins)}</b> 🪙</div><div class="gifts">${S.gifts.map(g => `<button class="gift" data-g="${g.id}"><div class="e">${esc(g.emoji)}</div>${esc(lang === 'fa' ? g.name_fa : g.name_en)}<div class="mut">${g.price} 🪙</div></button>`).join('')}</div><div class="chips" style="margin:14px 0" id="qs">${[1, 5, 10].map(n => `<button data-q="${n}" class="${n === 1 ? 'on' : ''}">×${n}</button>`).join('')}</div><button class="btn" id="gs" disabled>${t('sendgift')}</button></div>`);
+  let pick = null, qty = 1, target = 'me';
+  const bg = sheet('🎁 ' + l_('gift'), `<div class="body"><div class="mut small" style="margin-bottom:10px">${t('balance')}: <b id="bal">${fmt(S.me.coins)}</b> 🪙</div><div class="gifts">${S.gifts.map(g => `<button class="gift" data-g="${g.id}"><div class="e">${esc(g.emoji)}</div>${esc(lang === 'fa' ? g.name_fa : g.name_en)}<div class="mut">${g.price} 🪙</div></button>`).join('')}</div>${s.match && s.oppLive ? `<div class="chips" style="margin:12px 0 0" id="tg"><button data-t="me" class="on">→ ${esc(s.match.aMine ? s.match.a_name : s.match.b_name)}</button><button data-t="opp">→ ${esc(s.match.aMine ? s.match.b_name : s.match.a_name)}</button></div>` : ''}<div class="chips" style="margin:14px 0" id="qs">${[1, 5, 10].map(n => `<button data-q="${n}" class="${n === 1 ? 'on' : ''}">×${n}</button>`).join('')}</div><button class="btn" id="gs" disabled>${t('sendgift')}</button></div>`);
   $$('.gift', bg).forEach(b => b.onclick = () => { pick = S.gifts.find(g => g.id === b.dataset.g); $$('.gift', bg).forEach(x => x.classList.toggle('on', x === b)); $('#gs').disabled = false; });
+  $$('#tg button', bg).forEach(b => b.onclick = () => { target = b.dataset.t; $$('#tg button', bg).forEach(x => x.classList.toggle('on', x === b)); });
   $$('#qs button', bg).forEach(b => b.onclick = () => { qty = +b.dataset.q; $$('#qs button', bg).forEach(x => x.classList.toggle('on', x === b)); });
-  $('#gs').onclick = async () => { if (!pick) return; if (S.me.coins < pick.price * qty) return toast(t('nocoins')); try { S.me.coins = Number(await rpc('send_live_gift', {p_live: s.liveId, p_gift: pick.id, p_qty: qty})); const nm = lang === 'fa' ? pick.name_fa : pick.name_en; send({t: 'gift', u: S.me.username, m: nm, g: pick.id, n: qty}); addChat(S.me.username, '🎁 ' + nm, true); giftRain(pick.emoji, nm, pick.price * qty >= 50); closeSheet(); } catch (e) { fail(e); } };
+  $('#gs').onclick = async () => { if (!pick) return; if (S.me.coins < pick.price * qty) return toast(t('nocoins')); try { S.me.coins = Number(await rpc('send_live_gift', {p_live: target === 'opp' && s.oppLive ? s.oppLive : s.liveId, p_gift: pick.id, p_qty: qty})); const nm = lang === 'fa' ? pick.name_fa : pick.name_en; send({t: 'gift', u: S.me.username, m: nm, g: pick.id, n: qty}); addChat(S.me.username, '🎁 ' + nm, true); giftRain(pick.emoji, nm, pick.price * qty >= 50); closeSheet(); } catch (e) { fail(e); } };
 }
 let likeN = 0, likeT = 0;
 function like() { if (!s) return; heart(); send({t: 'heart', u: S.me.username, n: 1}); likeN++; clearTimeout(likeT); likeT = setTimeout(() => { const n = likeN; likeN = 0; if (s && s.liveId) rpc('live_like', {p_live: s.liveId, p_n: n}).catch(() => {}); }, 1500); }
@@ -274,7 +292,7 @@ async function pollMatchViewer() {
   applyMatch({status: 'accepted', a_name: m.a_name, b_name: m.b_name, a_coins: m.a_coins, b_coins: m.b_coins, seconds_left: m.seconds_left, aMine: m.a_live === S_.liveId}, oppLive, oppHost);
 }
 async function applyMatch(m, oppLive, oppHost) {
-  const S_ = s; S_.match = m; S_.oppHost = oppHost;
+  const S_ = s; S_.match = m; S_.oppHost = oppHost; S_.oppLive = oppLive;
   if (!S_.oppRoom && !S_.oppBusy && oppLive) {
     S_.oppBusy = true;
     try { await loadLK(); const tk = await ticket(oppLive), room = new (LC().Room)({adaptiveStream: true}); wire(room, S_, true); S_.oppRoom = room; await room.connect(tk.url, tk.token); S_.oppPane = mkPane(oppHost, m.aMine ? m.b_name : m.a_name, false); S_.panes.set('opp', S_.oppPane); S_.panes.delete('opp');
@@ -293,7 +311,7 @@ function renderScore() {
   else if (m.status === 'accepted' && m.seconds_left === 0) mid = `<span class="clock">${mine === theirs ? l_('draw') : '🏆 ' + l_('won') + ' @' + (mine > theirs ? myN : opN)}</span>`;
   sc.innerHTML = `<div class="sbar"><span class="a" style="width:${pct}%">${esc(myN)} · ${fmt(mine)}</span><span class="b" style="width:${100 - pct}%">${fmt(theirs)} · ${esc(opN)}</span></div>${mid}${s.isHost ? `<button class="btn sm danger" data-lv="leavem" style="pointer-events:auto">${l_('leave')}</button>` : ''}`;
 }
-function endMatchUI() { if (!s) return; try { s.oppRoom && s.oppRoom.disconnect(); } catch {} s.oppRoom = null; s.oppPane = null; s.match = null; s.oppHost = null; const sc = $('.score', s.el); if (sc) sc.remove(); arrange(); }
+function endMatchUI() { if (!s) return; s.oppLive = null; s.el.classList.remove('inmatch'); try { s.oppRoom && s.oppRoom.disconnect(); } catch {} s.oppRoom = null; s.oppPane = null; s.match = null; s.oppHost = null; const sc = $('.score', s.el); if (sc) sc.remove(); arrange(); }
 
 /* ---------- events ---------- */
 function bindLive(d) {
@@ -303,13 +321,14 @@ function bindLive(d) {
     const a = b.dataset.lv;
     if (a === 'close') closeLive(); else if (a === 'flip') flip(); else if (a === 'start') startLive();
     else if (a === 'mic') setMic(!s.mic); else if (a === 'cam') setCam(!s.cam);
-    else if (a === 'like') like(); else if (a === 'gift') giftSheet2(); else if (a === 'stage') stageAsk(); else if (a === 'stageoff') leaveStage();
+    else if (a === 'send') sendChat(); else if (a === 'like') like(); else if (a === 'gift') giftSheet2(); else if (a === 'stage') stageAsk(); else if (a === 'stageoff') leaveStage();
     else if (a === 'stagep') stageSheet(); else if (a === 'match') matchSheet();
     else if (a === 'ready') { try { await rpc('match_ready', {p_id: s.matchId}); } catch (x) { fail(x); } }
     else if (a === 'leavem') { const id = s.matchId; s.matchId = null; endMatchUI(); if (id) rpc('match_end', {p_id: id}).catch(() => {}); }
     else if (a === 'endq') { const bg = sheet(l_('endq'), `<div class="body" style="display:flex;gap:8px"><button class="btn sec" style="flex:1" data-x="0">✕</button><button class="btn danger" style="flex:2" data-x="1">${l_('end')}</button></div>`); $$('[data-x]', bg).forEach(x => x.onclick = () => x.dataset.x === '1' ? closeLive() : closeSheet()); }
     else if (a === 'more') { const bg = sheet('⋯', `<div class="body"><button class="btn sec" data-x="r">🚩 ${l_('report')}</button></div>`); $('[data-x=r]', bg).onclick = async () => { try { await rpc('report_live', {p_live: s.liveId, p_reason: 'inappropriate'}); toast(l_('reported')); closeSheet(); } catch (x) { fail(x); } }; }
   };
+  if (s && !s.isHost) { let y0 = null; d.addEventListener('touchstart', e => { y0 = e.target.closest('input,button,.chatl,.guests') ? null : e.touches[0].clientY; }, {passive: true}); d.addEventListener('touchend', e => { if (y0 != null && e.changedTouches[0].clientY - y0 > 140) closeLive(); y0 = null; }, {passive: true}); }
   d.onkeydown = e => { if (e.key === 'Enter' && e.target.id === 'cin') sendChat(); };
   d.addEventListener('dblclick', e => { if (!e.target.closest('button,input')) like(); });
 }
