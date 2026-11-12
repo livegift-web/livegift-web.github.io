@@ -8,7 +8,7 @@ const LEGAL = 'https://morti-amg.github.io/livegift-legal/';
 
 /* ---------- i18n ---------- */
 const L = {
- fa:{dir:'rtl',home:'خانه',discover:'کشف',inbox:'پیام‌ها',me:'من',email:'ایمیل',password:'رمز عبور',signin:'ورود',signup:'ساخت حساب',forgot:'رمز را فراموش کرده‌ام',
+ fa:{foryou:'برای شما',followingtab:'دنبال‌شونده‌ها',nofollowing:'هنوز کسی را دنبال نمی‌کنید یا پستی نیست.',trending:'پربازدیدها',likedtab:'لایک‌شده‌ها',dir:'rtl',home:'خانه',discover:'کشف',inbox:'پیام‌ها',me:'من',email:'ایمیل',password:'رمز عبور',signin:'ورود',signup:'ساخت حساب',forgot:'رمز را فراموش کرده‌ام',
   haveacc:'حساب دارید؟ وارد شوید',noacc:'حساب ندارید؟ بسازید',tagline:'ویدیو، هدیه و گفتگو',confirm:'ایمیل تأیید برایتان فرستاده شد. بعد از تأیید وارد شوید.',
   resetsent:'اگر این ایمیل ثبت شده باشد، لینک تغییر رمز فرستاده شد.',min6:'رمز عبور باید دست‌کم ۶ نویسه باشد.',
   nofeed:'هنوز پستی نیست.',comments:'نظرات',addcomment:'نظر بنویسید…',send:'ارسال',nocomments:'هنوز نظری نیست.',gift:'هدیه',coins:'سکه',
@@ -24,7 +24,7 @@ const L = {
   installhint:'برای نصب: در Safari دکمهٔ اشتراک‌گذاری ⬆️ را بزنید و «Add to Home Screen» را انتخاب کنید.',dismiss:'متوجه شدم',
   liveios:'پخش زنده و بازی‌ها فعلاً فقط در اپ iOS هستند.',mute:'صدا',admin:'مدیر',like_a:'پسندید',comment_a:'نظر داد',follow_a:'دنبالتان کرد',gift_a:'هدیه فرستاد',
   banned:'حساب شما محدود شده است.',signedas:'وارد شده با'},
- en:{dir:'ltr',home:'Home',discover:'Discover',inbox:'Messages',me:'Me',email:'Email',password:'Password',signin:'Sign in',signup:'Create account',forgot:'Forgot password',
+ en:{foryou:'For you',followingtab:'Following',nofollowing:'You follow nobody yet, or there are no posts.',trending:'Trending',likedtab:'Liked',dir:'ltr',home:'Home',discover:'Discover',inbox:'Messages',me:'Me',email:'Email',password:'Password',signin:'Sign in',signup:'Create account',forgot:'Forgot password',
   haveacc:'Have an account? Sign in',noacc:'No account? Create one',tagline:'Video, gifts and chat',confirm:'We sent you a confirmation e-mail. Confirm, then sign in.',
   resetsent:'If this e-mail is registered, a reset link has been sent.',min6:'Password must be at least 6 characters.',
   nofeed:'No posts yet.',comments:'Comments',addcomment:'Add a comment…',send:'Send',nocomments:'No comments yet.',gift:'Gift',coins:'Coins',
@@ -40,7 +40,7 @@ const L = {
   installhint:'To install: in Safari tap the Share button ⬆️ and choose “Add to Home Screen”.',dismiss:'Got it',
   liveios:'Live streaming and games are currently only in the iOS app.',mute:'Sound',admin:'Admin',like_a:'liked your post',comment_a:'commented',follow_a:'followed you',gift_a:'sent a gift',
   banned:'Your account is restricted.',signedas:'Signed in as'},
- de:{dir:'ltr',home:'Start',discover:'Entdecken',inbox:'Nachrichten',me:'Ich',email:'E-Mail',password:'Passwort',signin:'Anmelden',signup:'Konto erstellen',forgot:'Passwort vergessen',
+ de:{foryou:'Für dich',followingtab:'Folge ich',nofollowing:'Du folgst noch niemandem oder es gibt keine Beiträge.',trending:'Im Trend',likedtab:'Gefällt mir',dir:'ltr',home:'Start',discover:'Entdecken',inbox:'Nachrichten',me:'Ich',email:'E-Mail',password:'Passwort',signin:'Anmelden',signup:'Konto erstellen',forgot:'Passwort vergessen',
   haveacc:'Schon ein Konto? Anmelden',noacc:'Noch kein Konto? Erstellen',tagline:'Video, Geschenke und Chat',confirm:'Wir haben Ihnen eine Bestätigungs-E-Mail gesendet. Bestätigen Sie und melden Sie sich dann an.',
   resetsent:'Falls diese E-Mail-Adresse registriert ist, wurde ein Link zum Zurücksetzen gesendet.',min6:'Das Passwort muss mindestens 6 Zeichen lang sein.',
   nofeed:'Noch keine Beiträge.',comments:'Kommentare',addcomment:'Kommentar schreiben…',send:'Senden',nocomments:'Noch keine Kommentare.',gift:'Geschenk',coins:'Münzen',
@@ -147,7 +147,7 @@ const A = {
 };
 
 /* ---------- state ---------- */
-const S = {tab: 'home', overlay: [], me: null, posts: [], liked: new Set(), following: new Set(), blocked: new Set(), gifts: [], unread: 0, muted: true, installHint: store.get('lg.hint') !== '1', authMode: 'in'};
+const S = {tab: 'home', overlay: [], me: null, posts: [], liked: new Set(), following: new Set(), blocked: new Set(), gifts: [], unread: 0, muted: true, installHint: store.get('lg.hint') !== '1', authMode: 'in', ftab: 'foryou', ptab: 'posts', all: null};
 const root = $('#app');
 function toast(m) { const e = $('#toast'); e.textContent = m; e.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => e.hidden = true, 2600); }
 const fail = e => toast(e && e.message ? e.message : t('error'));
@@ -157,12 +157,26 @@ const avatar = (url, name, cls = '') => url ? `<img class="av ${cls}" src="${esc
 const fmt = n => n >= 1e6 ? (n / 1e6).toFixed(1) + 'M' : n >= 1e3 ? (n / 1e3).toFixed(1) + 'K' : String(n ?? 0);
 const ago = d => { const s = (Date.now() - new Date(d)) / 1000; return s < 60 ? '·' : s < 3600 ? Math.floor(s / 60) + 'm' : s < 86400 ? Math.floor(s / 3600) + 'h' : Math.floor(s / 86400) + 'd'; };
 const spin = '<div class="spin"></div>';
+const IC = {
+ home:'<svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>',
+ search:'<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>',
+ plus:'<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>',
+ chat:'<svg viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg>',
+ user:'<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>',
+ heart:'<svg viewBox="0 0 24 24"><path d="M12 20.5s-8-4.8-8-11a4.6 4.6 0 0 1 8-3 4.6 4.6 0 0 1 8 3c0 6.2-8 11-8 11z"/></svg>',
+ comment:'<svg viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg>',
+ gift:'<svg viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M5 12v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-8M12 8S10 3 7.5 4.5 9 8 12 8zm0 0s2-5 4.500-3.500S15 8 12 8z"/></svg>',
+ share:'<svg viewBox="0 0 24 24"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7M16 6l-4-4-4 4M12 2v13"/></svg>',
+ more:'<svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="19" cy="12" r="1.3"/></svg>',
+ sound:'<svg viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4zM16 9a4 4 0 0 1 0 6M19 6a8 8 0 0 1 0 12"/></svg>',
+ mute:'<svg viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4zM22 9l-6 6M16 9l6 6"/></svg>'
+};
 
 /* ---------- render: auth ---------- */
 function renderAuth(msg = {}) {
   applyLang();
   const up = S.authMode === 'up', fg = S.authMode === 'forgot';
-  root.innerHTML = `<div class="view"><div class="auth">
+  root.innerHTML = `<div class="auth-bg"></div><div class="view"><div class="auth">
    <div style="text-align:center"><div class="logo">Livegift</div><div class="mut">${t('tagline')}</div></div>
    <div class="lang">${['fa', 'en', 'de'].map(l => `<button data-act="lang" data-v="${l}" class="${l === lang ? 'on' : ''}">${l === 'fa' ? 'فارسی' : l === 'en' ? 'English' : 'Deutsch'}</button>`).join('')}</div>
    ${msg.err ? `<div class="err">${esc(msg.err)}</div>` : ''}${msg.ok ? `<div class="okmsg">${esc(msg.ok)}</div>` : ''}
@@ -201,8 +215,8 @@ async function boot() {
 }
 function shell() {
   applyLang();
-  const tabs = [['home', '🏠', t('home')], ['discover', '🔎', t('discover')], ['upload', '➕', t('upload')], ['inbox', '💬', t('inbox')], ['me', '👤', t('me')]];
-  root.innerHTML = `<div id="main" style="flex:1;min-height:0;display:flex;flex-direction:column"></div><nav class="tabs">${tabs.map(([k, i, n]) => `<button data-act="tab" data-v="${k}" class="${S.tab === k && !S.overlay.length ? 'on' : ''}"><span class="i">${i}</span>${n}${k === 'inbox' && S.unread ? `<span class="dot">${S.unread}</span>` : ''}</button>`).join('')}</nav><div id="layer"></div>`;
+  const tabs = [['home', IC.home, t('home')], ['discover', IC.search, t('discover')], ['upload', IC.plus, ''], ['inbox', IC.chat, t('inbox')], ['me', IC.user, t('me')]];
+  root.innerHTML = `<div id="main" style="flex:1;min-height:0;display:flex;flex-direction:column"></div><nav class="tabs">${tabs.map(([k, i, n]) => `<button data-act="tab" data-v="${k}" class="${k === 'upload' ? 'plus ' : ''}${S.tab === k && !S.overlay.length ? 'on' : ''}">${i}${n ? `<span>${n}</span>` : ''}${k === 'inbox' && S.unread ? `<span class="dot">${S.unread}</span>` : ''}</button>`).join('')}</nav><div id="layer"></div>`;
   render();
 }
 async function refreshUnread() { try { const th = await A.threads(); S.unread = th.reduce((a, x) => a + (x.unread || 0), 0); const b = $('.tabs [data-v=inbox]'); if (b) { let d = $('.dot', b); if (S.unread) { if (!d) { d = document.createElement('span'); d.className = 'dot'; b.append(d); } d.textContent = S.unread; } else if (d) d.remove(); } } catch {} }
@@ -221,17 +235,21 @@ function stopMedia() { $$('video').forEach(v => { try { v.pause(); } catch {} })
 
 /* ---------- feed ---------- */
 function postHTML(p) {
-  const a = p.author || {}, liked = S.liked.has(p.id), media = p.kind === 'photo'
+  const a = p.author || {}, liked = S.liked.has(p.id), own = p.author_id === session.userID, fol = S.following.has(p.author_id);
+  const media = p.kind === 'photo'
     ? `<img class="m" src="${esc(p.media_url)}" alt="" loading="lazy">`
     : `<video src="${esc(p.media_url)}" playsinline loop ${S.muted ? 'muted' : ''} preload="metadata"></video>`;
-  return `<section class="post" data-id="${p.id}">${media}<div class="ov"></div>
-   <div class="info"><div class="who" data-act="user" data-v="${p.author_id}">${avatar(a.avatar_url, a.username)}<span>@${esc(a.username)}</span></div>${p.caption ? `<div class="small" style="margin-top:6px">${esc(p.caption)}</div>` : ''}</div>
+  return `<section class="post" data-id="${p.id}" data-k="${p.kind}">${p.kind === 'photo' ? `<div class="bgblur" style="background-image:url('${esc(p.media_url)}')"></div>` : ''}${media}<div class="ov"></div><div class="pauseic">⏸</div>
+   <div class="info"><div class="who" data-act="user" data-v="${p.author_id}">${avatar(a.avatar_url, a.username, 'sm')}<span>@${esc(a.username)}</span></div>${p.caption ? `<div class="cap" data-act="cap">${esc(p.caption)}</div>` : ''}</div>
    <div class="side">
-    <button data-act="like" data-v="${p.id}" class="${liked ? 'liked' : ''}"><span class="i">${liked ? '❤️' : '🤍'}</span><span class="c">${fmt(p.like_count)}</span></button>
-    ${p.allow_comments === 'nobody' ? '' : `<button data-act="comments" data-v="${p.id}"><span class="i">💬</span>${fmt(p.comment_count)}</button>`}
-    ${p.author_id !== session.userID ? `<button data-act="gift" data-v="${p.id}" data-u="${p.author_id}"><span class="i">🎁</span>${t('gift')}</button>` : ''}
-    ${p.kind !== 'photo' ? `<button data-act="mute"><span class="i">${S.muted ? '🔇' : '🔊'}</span></button>` : ''}
-   </div></section>`;
+    <div class="avwrap" data-act="user" data-v="${p.author_id}">${avatar(a.avatar_url, a.username, 'ring')}${!own && !fol ? `<span class="follow-plus" data-act="follow2" data-v="${p.author_id}">+</span>` : ''}</div>
+    <button data-act="like" data-v="${p.id}" class="${liked ? 'liked' : ''}"><span class="ic">${IC.heart}</span><span class="c">${fmt(p.like_count)}</span></button>
+    ${p.allow_comments === 'nobody' ? '' : `<button data-act="comments" data-v="${p.id}"><span class="ic">${IC.comment}</span>${fmt(p.comment_count)}</button>`}
+    ${!own ? `<button class="giftb" data-act="gift" data-v="${p.id}" data-u="${p.author_id}"><span class="ic">${IC.gift}</span>${t('gift')}</button>` : ''}
+    <button data-act="share" data-v="${p.id}"><span class="ic">${IC.share}</span></button>
+    ${p.kind !== 'photo' ? `<button data-act="mute"><span class="ic mic">${S.muted ? IC.mute : IC.sound}</span></button>` : ''}
+    <button data-act="more" data-v="${p.id}" data-u="${p.author_id}"><span class="ic">${IC.more}</span></button>
+   </div><div class="prog"><i></i></div></section>`;
 }
 function wireFeed(box) {
   const seen = new Set();
@@ -242,32 +260,60 @@ function wireFeed(box) {
       const id = e.target.dataset.id; if (!seen.has(id)) { seen.add(id); A.view(id); }
     } else if (v) v.pause();
   }), {root: box, threshold: [0, .6, 1]});
-  $$('.post', box).forEach(s => io.observe(s));
+  $$('.post', box).forEach(sec => {
+    io.observe(sec);
+    const v = $('video', sec), bar = $('.prog i', sec);
+    if (v) v.ontimeupdate = () => { if (v.duration) bar.style.width = (v.currentTime / v.duration * 100) + '%'; };
+    let last = 0, timer = null;
+    sec.addEventListener('click', ev => {
+      if (ev.target.closest('button,[data-act]')) return;
+      const now = Date.now();
+      if (now - last < 320) { clearTimeout(timer); last = 0; heartBurst(sec, ev); const id = sec.dataset.id; if (!S.liked.has(id)) act({dataset: {act: 'like', v: id}}); return; }
+      last = now;
+      timer = setTimeout(() => { if (v) { const ic = $('.pauseic', sec); if (v.paused) { v.play().catch(() => {}); ic.textContent = '▶'; } else { v.pause(); ic.textContent = '⏸'; } ic.classList.add('show'); setTimeout(() => ic.classList.remove('show'), 500); } }, 330);
+    });
+  });
+}
+function heartBurst(sec, ev) {
+  const r = sec.getBoundingClientRect(), h = document.createElement('div'); h.className = 'bigheart'; h.textContent = '❤️';
+  h.style.left = (ev.clientX - r.left - 55) + 'px'; h.style.top = (ev.clientY - r.top - 70) + 'px'; sec.append(h); setTimeout(() => h.remove(), 850);
+}
+function giftRain(emoji, name) {
+  const r = document.createElement('div'); r.className = 'rain';
+  for (let i = 0; i < 26; i++) { const e = document.createElement('span'); e.textContent = emoji; e.style.left = Math.random() * 100 + '%'; e.style.fontSize = (22 + Math.random() * 34) + 'px'; e.style.animationDuration = (1.6 + Math.random() * 1.6) + 's'; e.style.animationDelay = Math.random() * .6 + 's'; r.append(e); }
+  const b = document.createElement('div'); b.className = 'giftbanner'; b.textContent = emoji + ' ' + name; r.append(b);
+  root.append(r); setTimeout(() => r.remove(), 4000);
 }
 async function vHome(m) {
-  m.innerHTML = `<div class="top"><span class="logo" style="font-size:18px;background:none;color:#fff;-webkit-text-fill-color:#fff">Livegift</span></div><div class="feed" id="feed">${spin}</div>`;
+  m.innerHTML = `<div class="top"><button data-act="ftab" data-v="foryou" class="${S.ftab === 'following' ? '' : 'on'}">${t('foryou')}</button><button data-act="ftab" data-v="following" class="${S.ftab === 'following' ? 'on' : ''}">${t('followingtab')}</button></div><div class="feed" id="feed"><div class="post"><div class="sk" style="width:100%;height:100%;border-radius:0"></div></div></div>`;
   try {
-    const all = await A.feed();
-    S.posts = all.filter(p => !S.blocked.has(p.author_id));
+    if (!S.all || S.reload) { S.all = (await A.feed()).filter(p => !S.blocked.has(p.author_id)); S.reload = false; }
+    S.posts = S.ftab === 'following' ? S.all.filter(p => S.following.has(p.author_id) || p.author_id === session.userID) : S.all;
     const f = $('#feed'); if (!f) return;
-    f.innerHTML = S.posts.length ? S.posts.map(postHTML).join('') : `<div class="empty" style="padding-top:40vh">${t('nofeed')}</div>`;
+    f.innerHTML = S.posts.length ? S.posts.map(postHTML).join('') : `<div class="empty" style="padding-top:38vh">${S.ftab === 'following' ? t('nofollowing') : t('nofeed')}</div>`;
     wireFeed(f);
-  } catch (e) { const f = $('#feed'); if (f) f.innerHTML = `<div class="empty" style="padding-top:40vh">${esc(e.message)}</div>`; }
+  } catch (e) { const f = $('#feed'); if (f) f.innerHTML = `<div class="empty" style="padding-top:38vh">${esc(e.message)}</div>`; }
 }
 
 /* ---------- discover ---------- */
 async function vDiscover(m) {
-  m.innerHTML = `<div class="view"><h1>${t('discover')}</h1><input id="q" placeholder="${t('search')}" style="margin:8px 0 14px"><div id="res" class="list">${spin}</div></div>`;
+  m.innerHTML = `<div class="view"><h1>${t('discover')}</h1><input id="q" placeholder="${t('search')}" style="margin:8px 0 16px"><div id="res">${spin}</div></div>`;
   const res = $('#res');
-  const show = rows => { res.innerHTML = rows.length ? rows.map(r => `<div class="it" data-act="user" data-v="${r.id}">${avatar(r.avatar_url, r.username)}<div class="t"><b>@${esc(r.username)}</b><div class="mut small">${esc(r.display_name || '')}${r.followers != null ? ' · ' + fmt(r.followers) + ' ' + t('followers') : ''}</div></div></div>`).join('') : `<div class="empty">—</div>`; };
-  let list = []; try { list = (await A.creators()).filter(c => !S.blocked.has(c.id)); show(list); } catch (e) { res.innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
-  let tm; $('#q').oninput = e => { clearTimeout(tm); const v = e.target.value.trim(); tm = setTimeout(async () => { if (!v) return show(list); try { show(await A.search(v)); } catch (x) { fail(x); } }, 300); };
+  const rows = r => `<div class="list">${r.map(x => `<div class="it" data-act="user" data-v="${x.id}">${avatar(x.avatar_url, x.username, 'sm')}<div class="t"><b>@${esc(x.username)}</b><div class="mut small">${esc(x.display_name || '')}</div></div></div>`).join('') || '<div class="empty">—</div>'}</div>`;
+  let list = [];
+  try {
+    list = (await A.creators()).filter(c => !S.blocked.has(c.id));
+    const posts = (S.all || (S.all = (await A.feed()).filter(p => !S.blocked.has(p.author_id)))).slice().sort((a, b) => b.like_count - a.like_count).slice(0, 18);
+    res.innerHTML = `<h2>${t('popular')}</h2><div class="stories">${list.slice(0, 15).map(c => `<div class="story" data-act="user" data-v="${c.id}">${avatar(c.avatar_url, c.username, 'ring')}<div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(c.username)}</div></div>`).join('')}</div><h2>${t('trending')}</h2>${postGrid(posts)}`;
+    S.viewPosts = posts;
+  } catch (e) { res.innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
+  let tm; $('#q').oninput = e => { clearTimeout(tm); const v = e.target.value.trim(); tm = setTimeout(async () => { if (!v) return vDiscover(m); try { res.innerHTML = rows(await A.search(v)); } catch (x) { fail(x); } }, 300); };
 }
 
 /* ---------- upload ---------- */
 function vUpload(m) {
   m.innerHTML = `<div class="view"><h1>${t('upload')}</h1><div style="display:flex;flex-direction:column;gap:14px;margin-top:12px">
-   <label class="btn sec" style="cursor:pointer">${t('choose')}<input id="file" type="file" accept="image/*,video/*" hidden></label>
+   <label class="upz"><div class="big">🎬</div><div style="font-weight:700;margin-top:6px">${t('choose')}</div><input id="file" type="file" accept="image/*,video/*" hidden></label>
    <div id="prev"></div>
    <textarea id="cap" rows="3" maxlength="300" placeholder="${t('caption')}"></textarea>
    <div><label class="k">${t('vis')}</label><div class="chips" id="vis">${[['public', t('public')], ['followers', t('followersonly')], ['private', t('private')]].map(([k, n], i) => `<button data-v="${k}" class="${i ? '' : 'on'}">${n}</button>`).join('')}</div></div>
@@ -310,17 +356,24 @@ async function vChat(d, o) {
 }
 
 /* ---------- profile (me / others) ---------- */
-function postGrid(ps) { return ps.length ? `<div class="grid">${ps.map(p => `<div class="g" data-act="open" data-v="${p.id}">${p.kind === 'photo' ? `<img src="${esc(p.media_url)}" loading="lazy" alt="">` : `<video src="${esc(p.media_url)}#t=0.1" preload="metadata" muted playsinline></video>`}<span>❤️ ${fmt(p.like_count)}</span></div>`).join('')}</div>` : `<div class="empty">${t('nofeed')}</div>`; }
+function postGrid(ps) { return ps.length ? `<div class="grid">${ps.map(p => `<div class="g" data-act="open" data-v="${p.id}">${p.kind === 'photo' ? `<img src="${esc(p.media_url)}" loading="lazy" alt="">` : `<video src="${esc(p.media_url)}#t=0.1" preload="metadata" muted playsinline></video>`}${p.kind !== 'photo' ? '<i class="vi">▶</i>' : ''}<span>❤️ ${fmt(p.like_count)}</span></div>`).join('')}</div>` : `<div class="empty">${t('nofeed')}</div>`; }
 async function vMe(m) {
   const me = S.me || {};
   m.innerHTML = `<div class="view">
-   ${S.installHint && !matchMedia('(display-mode: standalone)').matches && !navigator.standalone ? `<div class="install">${t('installhint')}<br><button class="link" data-act="hint">${t('dismiss')}</button></div>` : ''}
-   <div style="display:flex;flex-direction:column;align-items:center;gap:6px">${avatar(me.avatar_url, me.username, 'big')}<h2 style="margin:6px 0 0">${esc(me.display_name || me.username)}</h2><div class="mut">@${esc(me.username)}</div><div class="small" style="text-align:center">${esc(me.bio)}</div></div>
+   <div class="cover"></div>
+   <div class="phead">${avatar(me.avatar_url, me.username, 'big')}<h2 style="margin:6px 0 0">${esc(me.display_name || me.username)}</h2><div class="mut">@${esc(me.username)}</div><div class="small" style="max-width:300px">${esc(me.bio)}</div></div>
+   ${S.installHint && !matchMedia('(display-mode: standalone)').matches && !navigator.standalone ? `<div class="install" style="margin-top:12px">${t('installhint')}<br><button class="link" data-act="hint">${t('dismiss')}</button></div>` : ''}
    <div class="stats" id="st"><div><b>…</b><span class="mut small">${t('followers')}</span></div><div><b>…</b><span class="mut small">${t('likes')}</span></div><div><b>${fmt(me.coins)}</b><span class="mut small">${t('coins')} 🪙</span></div></div>
-   <div class="row" style="margin-bottom:10px"><button class="btn sec" data-act="edit">${t('edit')}</button><button class="btn sec" data-act="activity" style="width:auto;padding-inline:18px">🔔</button><button class="btn sec" data-act="settings" style="width:auto;padding-inline:18px">⚙️</button></div>
+   <div class="row" style="margin-bottom:6px"><button class="btn sec" data-act="edit">${t('edit')}</button><button class="btn sec" data-act="activity" style="width:auto;padding-inline:18px">🔔</button><button class="btn sec" data-act="settings" style="width:auto;padding-inline:18px">⚙️</button></div>
+   <div class="ptabs"><button data-act="ptab" data-v="posts" class="${S.ptab === 'liked' ? '' : 'on'}">${t('posts')}</button><button data-act="ptab" data-v="liked" class="${S.ptab === 'liked' ? 'on' : ''}">${t('likedtab')}</button></div>
    <div id="mine">${spin}</div></div>`;
   A.stats().then(s => { const st = $('#st'); if (st && s) st.innerHTML = `<div><b>${fmt(s.followers)}</b><span class="mut small">${t('followers')}</span></div><div><b>${fmt(s.likes)}</b><span class="mut small">${t('likes')}</span></div><div><b>${fmt(me.coins)}</b><span class="mut small">${t('coins')} 🪙</span></div>`; }).catch(() => {});
-  try { const ps = await A.userPosts(session.userID); S.mine = ps; const b = $('#mine'); if (b) b.innerHTML = postGrid(ps); } catch (e) { const b = $('#mine'); if (b) b.innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
+  try {
+    let ps;
+    if (S.ptab === 'liked') { const ids = [...S.liked]; ps = ids.length ? await sel('posts', {select: '*,author:profiles!author_id(username,avatar_url)', id: 'in.(' + ids.slice(0, 60).join(',') + ')', is_removed: 'eq.false', order: 'created_at.desc'}) : []; }
+    else ps = await A.userPosts(session.userID);
+    S.mine = ps; const b = $('#mine'); if (b) b.innerHTML = postGrid(ps);
+  } catch (e) { const b = $('#mine'); if (b) b.innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
 }
 async function vProfile(d, o) {
   d.innerHTML = `<div class="bar"><button class="back" data-act="back">${L[lang].dir === 'rtl' ? '→' : '←'}</button><b>${t('profile')}</b></div><div class="view" id="pv">${spin}</div>`;
@@ -395,7 +448,7 @@ function giftSheet(user, postId) {
   $('#gs').onclick = async () => {
     if (!pick) return;
     if (S.me.coins < pick.price * qty) return toast(t('nocoins'));
-    try { S.me.coins = Number(await A.sendGift(user, pick.id, qty, postId)); toast(t('giftsent')); closeSheet(); } catch (e) { fail(e); }
+    try { S.me.coins = Number(await A.sendGift(user, pick.id, qty, postId)); toast(t('giftsent')); closeSheet(); giftRain(pick.emoji, lang === 'fa' ? pick.name_fa : pick.name_en); } catch (e) { fail(e); }
   };
 }
 function openPostViewer(id, list) {
@@ -412,14 +465,30 @@ async function act(el) {
   switch (a) {
     case 'lang': lang = v; store.set('lg.lang', v); if (session) { applyLang(); shell(); if (S.overlay.length) {} } else renderAuth(); break;
     case 'mode': S.authMode = v; renderAuth(); break;
-    case 'tab': S.overlay = []; S.tab = v; closeSheet(); render(); break;
+    case 'tab': if (v === 'home' && S.tab === 'home' && !S.overlay.length) S.reload = true; S.overlay = []; S.tab = v; closeSheet(); render(); break;
     case 'back': pop(); break;
     case 'hint': S.installHint = false; store.set('lg.hint', '1'); render(); break;
-    case 'mute': S.muted = !S.muted; $$('video').forEach(x => x.muted = S.muted); $$('[data-act=mute] .i').forEach(i => i.textContent = S.muted ? '🔇' : '🔊'); break;
+    case 'mute': S.muted = !S.muted; $$('video').forEach(x => x.muted = S.muted); $$('.mic').forEach(i => i.innerHTML = S.muted ? IC.mute : IC.sound); break;
+    case 'ftab': S.ftab = v; render(); break;
+    case 'ptab': S.ptab = v; render(); break;
+    case 'cap': el.classList && el.classList.toggle('open'); break;
+    case 'follow2': { S.following.add(v); $$(`.follow-plus[data-v="${v}"]`).forEach(x => x.remove()); try { await A.follow(v, true); } catch (e) { fail(e); } break; }
+    case 'share': { const link = location.origin + location.pathname; try { if (navigator.share) await navigator.share({title: 'Livegift', url: link}); else { await navigator.clipboard.writeText(link); toast('✓'); } } catch {} break; }
+    case 'more': {
+      const own = el.dataset.u === session.userID;
+      const b = sheet('', `<div class="body" style="display:flex;flex-direction:column;gap:10px">${own ? `<button class="btn danger" data-x="del">${t('delete')}</button>` : `<button class="btn sec" data-x="rep">${t('report')}</button>`}<button class="btn sec" data-act="closesheet">${t('cancel')}</button></div>`);
+      const pid = v;
+      $$('[data-x]', b).forEach(x => x.onclick = async () => {
+        try {
+          if (x.dataset.x === 'del') { await A.deletePost(pid); S.all = null; toast('✓'); closeSheet(); $('#viewer')?.remove(); render(); }
+          else { await A.report('post', pid, 'post_report'); toast(t('reported')); closeSheet(); }
+        } catch (e) { fail(e); }
+      }); break;
+    }
     case 'like': {
       const id = v, p = [...S.posts, ...(S.viewList || []), ...(S.viewPosts || []), ...(S.mine || [])].find(x => x.id === id), on = !S.liked.has(id);
       on ? S.liked.add(id) : S.liked.delete(id); if (p) p.like_count = Math.max(0, p.like_count + (on ? 1 : -1));
-      $$(`[data-act=like][data-v="${id}"]`).forEach(b => { b.classList.toggle('liked', on); $('.i', b).textContent = on ? '❤️' : '🤍'; $('.c', b).textContent = fmt(p ? p.like_count : 0); });
+      $$(`[data-act=like][data-v="${id}"]`).forEach(b => { b.classList.toggle('liked', on); $('.c', b).textContent = fmt(p ? p.like_count : 0); });
       try { await A.like(id, on); } catch (e) { fail(e); } break;
     }
     case 'comments': commentsSheet(v); break;
@@ -427,7 +496,7 @@ async function act(el) {
     case 'closesheet': closeSheet(); break;
     case 'user': { const vw = $('#viewer'); if (vw) vw.remove(); S.overlay.push({k: 'profile', id: v}); render(); break; }
     case 'chat': S.overlay.push({k: 'chat', id: v, name: el.dataset.n}); render(); break;
-    case 'open': openPostViewer(v, S.overlay.length ? S.viewPosts : S.mine); break;
+    case 'open': openPostViewer(v, (S.overlay.length || S.tab === 'discover') ? S.viewPosts : S.mine); break;
     case 'closeviewer': $('#viewer')?.remove(); break;
     case 'follow': { const on = !S.following.has(v); on ? S.following.add(v) : S.following.delete(v); el.textContent = on ? t('following') : t('follow'); el.classList.toggle('sec', on); try { await A.follow(v, on); } catch (e) { fail(e); } break; }
     case 'block': { const on = !S.blocked.has(v); try { await A.block(v, on); on ? S.blocked.add(v) : S.blocked.delete(v); on && S.following.delete(v); render(); } catch (e) { fail(e); } break; }
