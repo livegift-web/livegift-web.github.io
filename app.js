@@ -465,7 +465,7 @@ async function act(el) {
   switch (a) {
     case 'lang': lang = v; store.set('lg.lang', v); if (session) { applyLang(); shell(); if (S.overlay.length) {} } else renderAuth(); break;
     case 'mode': S.authMode = v; renderAuth(); break;
-    case 'tab': if (v === 'home' && S.tab === 'home' && !S.overlay.length) S.reload = true; S.overlay = []; S.tab = v; closeSheet(); render(); break;
+    case 'tab': if (v === 'upload') { closeSheet(); window.Studio && Studio.open(); break; } if (v === 'home' && S.tab === 'home' && !S.overlay.length) S.reload = true; S.overlay = []; S.tab = v; closeSheet(); render(); break;
     case 'back': pop(); break;
     case 'hint': S.installHint = false; store.set('lg.hint', '1'); render(); break;
     case 'mute': S.muted = !S.muted; $$('video').forEach(x => x.muted = S.muted); $$('.mic').forEach(i => i.innerHTML = S.muted ? IC.mute : IC.sound); break;
